@@ -1,39 +1,39 @@
 const express = require('express');
 const router = express.Router();
-const Category = require('../models/Category');
+const Subject = require('../models/Subject');
 const { protect } = require('../middleware/authMiddleware');
 const { isTeacher } = require('../middleware/roleMiddleware');
 
-// GET /api/categories
+// GET /api/subjects
 router.get('/', async (req, res) => {
   try {
-    const categories = await Category.find().sort({ name: 1 });
-    res.json(categories);
+    const subjects = await Subject.find().sort({ name: 1 });
+    res.json(subjects);
   } catch (err) {
     res.status(500).json({ message: 'Lỗi server', error: err.message });
   }
 });
 
-// POST /api/categories (teacher only)
+// POST /api/subjects (teacher only)
 router.post('/', protect, isTeacher, async (req, res) => {
   try {
-    const existing = await Category.findOne({ name: req.body.name });
+    const existing = await Subject.findOne({ name: req.body.name });
     if (existing) {
-      return res.status(400).json({ message: 'Category đã tồn tại' });
+      return res.status(400).json({ message: 'Môn học đã tồn tại' });
     }
-    const category = new Category({ name: req.body.name });
-    await category.save();
-    res.status(201).json(category);
+    const subject = new Subject({ name: req.body.name });
+    await subject.save();
+    res.status(201).json(subject);
   } catch (err) {
     res.status(500).json({ message: 'Lỗi server', error: err.message });
   }
 });
 
-// DELETE /api/categories/:id (teacher only)
+// DELETE /api/subjects/:id (teacher only)
 router.delete('/:id', protect, isTeacher, async (req, res) => {
   try {
-    await Category.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Đã xóa category' });
+    await Subject.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Đã xóa môn học' });
   } catch (err) {
     res.status(500).json({ message: 'Lỗi server', error: err.message });
   }
