@@ -3,6 +3,7 @@ import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import Footer from './components/Footer'
 import {Toaster} from 'react-hot-toast' 
+import DocumentDetail from './pages/DocumentDetail'
 
 const App = () => {
 
@@ -15,6 +16,7 @@ const App = () => {
     {!isAdminRoute && <Navbar/>}
     <Routes>
       <Route path='/' element={<Home/>}/>
+      <Route path='/documents/:documentId' element={<DocumentDetail/>}/>
     </Routes>
     {!isAdminRoute && <Footer/>}
     </>
