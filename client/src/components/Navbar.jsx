@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Bell, BookOpen, Filter, Search } from "lucide-react";
+import { Bell, Filter, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const demoUser = {
@@ -15,8 +15,12 @@ const Navbar = ({ user = demoUser }) => {
       <div className="flex w-full items-center justify-between px-4 py-5">
         <div className="flex items-center gap-5">
           <Link to="/" className="flex items-center gap-4">
-            <div className="flex h-[60px] w-[60px] items-center justify-center rounded-2xl bg-[var(--theme-blue)] text-white">
-              <BookOpen className="h-7 w-7" strokeWidth={1.8} />
+            <div className="flex h-[60px] w-[60px] items-center justify-center overflow-hidden">
+              <img
+                src="/IU_icon.png"
+                alt="IU logo"
+                className="h-full w-full object-contain"
+              />
             </div>
 
             <div>
