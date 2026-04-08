@@ -2,23 +2,23 @@ import React from 'react'
 import { MessageSquare, Send, UserRound } from 'lucide-react'
 
 const roleClasses = {
-  student: 'bg-slate-100 text-slate-700',
-  teacher: 'bg-[#dfe3ff] text-[#4f46ff]',
+  student: 'bg-slate-100 text-[var(--theme-blue)]',
+  teacher: 'bg-slate-100 text-[var(--theme-blue)]',
 }
 
 const DocumentComments = ({ document }) => {
   return (
     <section className="rounded-[28px] border border-slate-200 bg-white px-8 py-10 shadow-[0_6px_20px_rgba(15,23,42,0.06)]">
       <div className="mb-10 flex items-center gap-3 text-slate-950">
-        <MessageSquare className="h-7 w-7 text-slate-600" strokeWidth={1.8} />
-        <h2 className="text-[2rem] font-semibold tracking-tight">
+        <MessageSquare className="h-7 w-7 text-[var(--theme-blue)]" strokeWidth={1.8} />
+        <h2 className="text-[2rem] font-medium tracking-tight">
           Comments ({document.comments.length})
         </h2>
       </div>
 
       <div className="mb-12">
         <div className="mb-5 flex items-start gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#dfe3ff] text-[#4f46ff]">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--theme-blue)] text-white">
             <UserRound className="h-8 w-8" strokeWidth={1.7} />
           </div>
 
@@ -32,7 +32,7 @@ const DocumentComments = ({ document }) => {
         <div className="flex justify-end">
           <button
             type="button"
-            className="inline-flex items-center gap-3 rounded-2xl bg-[linear-gradient(135deg,#5a46ff_0%,#4b35e8_100%)] px-8 py-4 text-[1.1rem] font-medium text-white"
+            className="inline-flex items-center gap-3 rounded-2xl bg-[var(--theme-blue)] px-8 py-4 text-[1.1rem] font-normal text-white"
           >
             <Send className="h-5 w-5" strokeWidth={1.8} />
             Post Comment
@@ -49,7 +49,7 @@ const DocumentComments = ({ document }) => {
 
             <div className="flex-1">
               <div className="mb-2 flex items-center gap-4">
-                <h3 className="text-[1.1rem] font-medium text-slate-950">{comment.author}</h3>
+                <h3 className="text-[1.1rem] font-normal text-slate-950">{comment.author}</h3>
                 <span
                   className={`rounded-lg px-3 py-1 text-[0.9rem] font-normal capitalize ${
                     roleClasses[comment.role]

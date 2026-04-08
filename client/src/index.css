@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 :root {
+  --theme-blue: #2563eb;
   color: #0f172a;
-  background-color: #f3f5fb;
+  background-color: #f6f9ff;
   font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
 }
 
 html {
-  background: #f3f5fb;
+  background: #f6f9ff;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(243, 245, 251, 1) 100%);
+  background: #f6f9ff;
 }
 
 #root {
