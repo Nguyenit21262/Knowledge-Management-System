@@ -64,7 +64,10 @@ const Profile = () => {
             <div className="space-y-10">
               <div>
                 <div className="mb-3 flex items-center gap-3 text-slate-700">
-                  <UserRound className="h-6 w-6 text-[var(--theme-blue)]" strokeWidth={1.7} />
+                  <UserRound
+                    className="h-6 w-6 text-[var(--theme-blue)]"
+                    strokeWidth={1.7}
+                  />
                   <span className="text-[1rem] font-medium">Full Name</span>
                 </div>
                 <p className="text-[1.05rem] font-normal text-slate-950">
@@ -74,7 +77,10 @@ const Profile = () => {
 
               <div>
                 <div className="mb-3 flex items-center gap-3 text-slate-700">
-                  <Mail className="h-6 w-6 text-[var(--theme-blue)]" strokeWidth={1.7} />
+                  <Mail
+                    className="h-6 w-6 text-[var(--theme-blue)]"
+                    strokeWidth={1.7}
+                  />
                   <span className="text-[1rem] font-medium">Email Address</span>
                 </div>
                 <p className="text-[1.05rem] font-normal text-slate-950">
@@ -84,7 +90,10 @@ const Profile = () => {
 
               <div>
                 <div className="mb-3 flex items-center gap-3 text-slate-700">
-                  <Shield className="h-6 w-6 text-[var(--theme-blue)]" strokeWidth={1.7} />
+                  <Shield
+                    className="h-6 w-6 text-[var(--theme-blue)]"
+                    strokeWidth={1.7}
+                  />
                   <span className="text-[1rem] font-medium">Role</span>
                 </div>
                 <p className="text-[1.05rem] font-normal text-slate-950">
@@ -94,7 +103,10 @@ const Profile = () => {
 
               <div>
                 <div className="mb-3 flex items-center gap-3 text-slate-700">
-                  <FileText className="h-6 w-6 text-[var(--theme-blue)]" strokeWidth={1.7} />
+                  <FileText
+                    className="h-6 w-6 text-[var(--theme-blue)]"
+                    strokeWidth={1.7}
+                  />
                   <span className="text-[1rem] font-medium">Bio</span>
                 </div>
                 <p className="text-[1.05rem] font-normal text-slate-950">
@@ -104,7 +116,10 @@ const Profile = () => {
 
               <div>
                 <div className="mb-3 flex items-center gap-3 text-slate-700">
-                  <CalendarDays className="h-6 w-6 text-[var(--theme-blue)]" strokeWidth={1.7} />
+                  <CalendarDays
+                    className="h-6 w-6 text-[var(--theme-blue)]"
+                    strokeWidth={1.7}
+                  />
                   <span className="text-[1rem] font-medium">Member Since</span>
                 </div>
                 <p className="text-[1.05rem] font-normal text-slate-950">

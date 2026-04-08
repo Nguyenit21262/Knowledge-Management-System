@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --theme-blue: #2563eb;
+  --theme-blue: #3b82f6;
   color: #0f172a;
   background-color: #f6f9ff;
   font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
