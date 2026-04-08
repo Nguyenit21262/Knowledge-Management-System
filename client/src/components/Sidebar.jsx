@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { ChevronLeft, ChevronRight, FileText, Home } from "lucide-react";
+import {
+  Bookmark,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Home,
+  Search,
+} from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 const sidebarUser = {
@@ -13,6 +20,8 @@ const Sidebar = ({ user = sidebarUser }) => {
   const [isOpen, setIsOpen] = useState(true);
   const location = useLocation();
   const isHomeActive = location.pathname === "/";
+  const isBookmarksActive = location.pathname === "/bookmarks";
+  const isSearchActive = location.pathname === "/search";
   const isUploadsActive = location.pathname === "/uploads";
   const userInitial = user.name.charAt(0).toUpperCase();
 
@@ -117,6 +126,30 @@ const Sidebar = ({ user = sidebarUser }) => {
         >
           <FileText className="h-5 w-5" strokeWidth={1.8} />
           {isOpen && "Uploads"}
+        </Link>
+
+        <Link
+          to="/search"
+          className={`mt-3 flex items-center py-3 text-[1.05rem] font-normal rounded-lg ${
+            isSearchActive
+              ? "bg-blue-400 text-white"
+              : "bg-slate-50 text-slate-700"
+          } ${isOpen ? "justify-start gap-3 px-4" : "justify-center px-0"}`}
+        >
+          <Search className="h-5 w-5" strokeWidth={1.8} />
+          {isOpen && "Search"}
+        </Link>
+
+        <Link
+          to="/bookmarks"
+          className={`mt-3 flex items-center py-3 text-[1.05rem] font-normal rounded-lg ${
+            isBookmarksActive
+              ? "bg-blue-400 text-white"
+              : "bg-slate-50 text-slate-700"
+          } ${isOpen ? "justify-start gap-3 px-4" : "justify-center px-0"}`}
+        >
+          <Bookmark className="h-5 w-5" strokeWidth={1.8} />
+          {isOpen && "Bookmarks"}
         </Link>
       </nav>
     </aside>

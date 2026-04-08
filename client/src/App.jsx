@@ -8,9 +8,12 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminKnowledgeBase from "./pages/admin/AdminKnowledgeBase";
 import AdminPlaceholder from "./pages/admin/AdminPlaceholder";
+import Bookmarks from "./pages/Bookmarks";
 import DocumentDetail from "./pages/DocumentDetail";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
+import Search from "./pages/Search";
+import UploadNew from "./pages/UploadNew";
 import Uploads from "./pages/Uploads";
 
 const App = () => {
@@ -32,8 +35,11 @@ const App = () => {
                   path="/documents/:documentId"
                   element={<DocumentDetail />}
                 />
+                <Route path="/search" element={<Search />} />
+                <Route path="/bookmarks" element={<Bookmarks />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/uploads" element={<Uploads />} />
+                <Route path="/uploads/new" element={<UploadNew />} />
               </Routes>
               <Footer />
             </div>

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Bell, Filter, Search } from "lucide-react";
+import { Bell, Search, Upload } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const demoUser = {
@@ -38,17 +38,17 @@ const Navbar = ({ user = demoUser }) => {
               className="w-full bg-transparent text-[1rem] outline-none placeholder:text-slate-400"
             />
           </div>
-
-          <button
-            type="button"
-            className="inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-[1rem] font-normal "
-          >
-            <Filter className="h-5 w-5" strokeWidth={1.8} />
-            Filter
-          </button>
         </div>
 
         <div className="flex items-center gap-4">
+          <Link
+            to="/uploads/new"
+            className="inline-flex items-center gap-2 text-[1.05rem] font-normal text-slate-500"
+          >
+            <Upload className="h-5 w-5" strokeWidth={1.8} />
+            <span>Upload</span>
+          </Link>
+
           <button
             type="button"
             className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-white text-[var(--theme-blue)]"
@@ -75,6 +75,14 @@ const Navbar = ({ user = demoUser }) => {
                   className="block w-full rounded-xl px-4 py-3 text-left text-[1rem] font-normal text-slate-700"
                 >
                   Profile
+                </Link>
+
+                <Link
+                  to="/profile"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="block w-full rounded-xl px-4 py-3 text-left text-[1rem] font-normal text-slate-700"
+                >
+                  Logout
                 </Link>
               </div>
             )}
