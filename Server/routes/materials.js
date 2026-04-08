@@ -3,10 +3,11 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const Material = require('../models/Material');
+const Comment = require('../models/Comment');
 const { protect } = require('../middleware/authMiddleware');
 const { isTeacher } = require('../middleware/roleMiddleware');
 
-// Cấu hình multer lưu file
+// Cấu hình multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/'),
   filename: (req, file, cb) => {
@@ -14,23 +15,41 @@ const storage = multer.diskStorage({
     cb(null, unique + path.extname(file.originalname));
   }
 });
-
 const upload = multer({ storage });
 
-// Hàm detect fileType từ extension
+// Detect file type
 const detectFileType = (filename) => {
   const ext = path.extname(filename).toLowerCase();
-  if (['.pdf'].includes(ext)) return 'pdf';
-  if (['.mp4', '.mov', '.avi', '.mkv'].includes(ext)) return 'video';
-  if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) return 'image';
-  if (['.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx'].includes(ext)) return 'document';
-  return 'other';
+  if (['.mp4', '.mov', '.avi', '.mkv'].includes(ext)) return 'VIDEO';
+  return 'PDF';
 };
 
-// GET /api/materials
+// Format document trả về cho frontend
+const formatMaterial = (material, comments = []) => ({
+  id: material._id,
+  type: material.type,
+  subject: material.subject,
+  title: material.title,
+  description: material.description,
+  category: material.category,
+  author: material.uploadedBy?.name || 'Unknown',
+  date: new Date(material.createdAt).toLocaleDateString('en-US'),
+  downloads: material.downloads,
+  commentsCount: material.commentsCount,
+  fileUrl: material.fileUrl,
+  comments: comments.map(c => ({
+    id: c._id,
+    author: c.author?.name || 'Unknown',
+    role: c.author?.role || 'student',
+    date: new Date(c.createdAt).toLocaleDateString('en-US'),
+    content: c.content
+  }))
+});
+
+// GET /api/materials — Lấy tất cả tài liệu
 router.get('/', async (req, res) => {
   try {
-    const { search, subject } = req.query;
+    const { search, subject, type } = req.query;
     let filter = {};
 
     if (search) {
@@ -40,38 +59,40 @@ router.get('/', async (req, res) => {
       ];
     }
     if (subject) filter.subject = subject;
+    if (type) filter.type = type;
 
     const materials = await Material.find(filter)
       .populate('uploadedBy', 'name role')
-      .populate('subject', 'name')
-      .populate('category', 'name')
       .sort({ createdAt: -1 });
 
-    res.json(materials);
+    const result = materials.map(m => formatMaterial(m));
+    res.json(result);
   } catch (err) {
     res.status(500).json({ message: 'Lỗi server', error: err.message });
   }
 });
 
-// GET /api/materials/:id
+// GET /api/materials/:id — Lấy chi tiết + comments
 router.get('/:id', async (req, res) => {
   try {
     const material = await Material.findById(req.params.id)
-      .populate('uploadedBy', 'name role')
-      .populate('subject', 'name')
-      .populate('category', 'name');
+      .populate('uploadedBy', 'name role');
 
     if (!material) {
       return res.status(404).json({ message: 'Không tìm thấy tài liệu' });
     }
 
-    res.json(material);
+    const comments = await Comment.find({ material: req.params.id })
+      .populate('author', 'name role')
+      .sort({ createdAt: 1 });
+
+    res.json(formatMaterial(material, comments));
   } catch (err) {
     res.status(500).json({ message: 'Lỗi server', error: err.message });
   }
 });
 
-// POST /api/materials (teacher only)
+// POST /api/materials — Upload tài liệu (teacher only)
 router.post('/', protect, isTeacher, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
@@ -85,15 +106,16 @@ router.post('/', protect, isTeacher, upload.single('file'), async (req, res) => 
     const material = new Material({
       title,
       description,
-      fileUrl,
-      fileType,
       subject,
       category,
+      type: fileType,
+      fileUrl,
       uploadedBy: req.user.id
     });
 
     await material.save();
-    res.status(201).json(material);
+    const populated = await material.populate('uploadedBy', 'name role');
+    res.status(201).json(formatMaterial(populated));
   } catch (err) {
     res.status(500).json({ message: 'Lỗi server', error: err.message });
   }
@@ -104,10 +126,10 @@ router.patch('/:id/download', async (req, res) => {
   try {
     const material = await Material.findByIdAndUpdate(
       req.params.id,
-      { $inc: { downloadCount: 1 } },
+      { $inc: { downloads: 1 } },
       { new: true }
     );
-    res.json({ downloadCount: material.downloadCount });
+    res.json({ downloads: material.downloads });
   } catch (err) {
     res.status(500).json({ message: 'Lỗi server', error: err.message });
   }

@@ -1,18 +1,15 @@
 const mongoose = require('mongoose');
 
 const MaterialSchema = new mongoose.Schema({
+  type: { type: String, enum: ['PDF', 'VIDEO'], required: true },
+  subject: { type: String, required: true },
   title: { type: String, required: true },
   description: { type: String },
-  fileUrl: { type: String, required: true },
-  fileType: {
-    type: String,
-    enum: ['pdf', 'video', 'image', 'document', 'other'],
-    default: 'other'
-  },
-  subject: { type: mongoose.Schema.Types.ObjectId, ref: 'Subject' },
-  category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
+  category: { type: String, required: true },
   uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  downloadCount: { type: Number, default: 0 },
+  fileUrl: { type: String, required: true },
+  downloads: { type: Number, default: 0 },
+  commentsCount: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
 
