@@ -12,7 +12,7 @@ const Navbar = ({ user = demoUser }) => {
 
   return (
     <header className="w-full border-b border-slate-200 bg-white">
-      <div className="mx-auto flex max-w-screen-2xl items-center justify-between px-10 py-5">
+      <div className="flex w-full items-center justify-between px-4 py-5">
         <div className="flex items-center gap-5">
           <Link to="/" className="flex items-center gap-4">
             <div className="flex h-[60px] w-[60px] items-center justify-center rounded-2xl bg-[var(--theme-blue)] text-white">
@@ -37,7 +37,7 @@ const Navbar = ({ user = demoUser }) => {
 
           <button
             type="button"
-            className="inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-[1rem] font-normal text-[var(--theme-blue)]"
+            className="inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-[1rem] font-normal "
           >
             <Filter className="h-5 w-5" strokeWidth={1.8} />
             Filter
