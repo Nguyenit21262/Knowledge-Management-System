@@ -76,34 +76,34 @@ const subjectSummary = Object.entries(
 
 const AdminDashboard = () => {
   return (
-    <main className="px-8 py-10">
-      <h1 className="text-[3rem] font-medium tracking-tight text-slate-950">
+    <main className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+      <h1 className="text-3xl font-medium tracking-tight text-slate-950 sm:text-4xl lg:text-[3rem]">
         Dashboard
       </h1>
-      <p className="mt-3 text-[1.15rem] font-normal text-slate-500">
+      <p className="mt-3 max-w-2xl text-base font-normal text-slate-500 sm:text-[1.08rem] lg:text-[1.15rem]">
         Welcome back! Here's what's happening in your knowledge base.
       </p>
 
-      <section className="mt-10 grid grid-cols-4 gap-6">
+      <section className="mt-8 grid grid-cols-1 gap-4 sm:mt-10 sm:grid-cols-2 sm:gap-6 xl:grid-cols-4">
         {stats.map((item) => {
           const Icon = item.icon;
 
           return (
             <article
               key={item.label}
-              className="rounded-md border border-slate-200 bg-white px-8 py-7 shadow-[0_6px_20px_rgba(15,23,42,0.04)]"
+              className="rounded-md border border-slate-200 bg-white px-5 py-5 shadow-[0_6px_20px_rgba(15,23,42,0.04)] sm:px-6 sm:py-6 lg:px-8 lg:py-7"
             >
               <div className="mb-6 flex items-start justify-between gap-4">
-                <p className="text-[0.98rem] font-medium uppercase tracking-[0.06em] text-slate-500">
+                <p className="text-[0.9rem] font-medium uppercase tracking-[0.06em] text-slate-500 sm:text-[0.98rem]">
                   {item.label}
                 </p>
                 <Icon className="h-5 w-5 text-[#f59e0b]" strokeWidth={1.8} />
               </div>
 
-              <p className="text-[2.1rem] font-medium text-slate-950">
+              <p className="text-[1.8rem] font-medium text-slate-950 sm:text-[2rem] lg:text-[2.1rem]">
                 {item.value}
               </p>
-              <p className="mt-2 text-[1rem] font-normal text-slate-500">
+              <p className="mt-2 text-[0.98rem] font-normal text-slate-500 sm:text-[1rem]">
                 {item.note}
               </p>
             </article>
@@ -111,10 +111,10 @@ const AdminDashboard = () => {
         })}
       </section>
 
-      <section className="mt-10 grid grid-cols-[minmax(0,1.8fr)_minmax(320px,0.9fr)] gap-8">
+      <section className="mt-8 grid grid-cols-1 gap-6 sm:mt-10 xl:grid-cols-[minmax(0,1.8fr)_minmax(320px,0.9fr)] xl:gap-8">
         <article className="rounded-md border border-slate-200 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.04)]">
-          <div className="border-b border-slate-200 px-8 py-6">
-            <h2 className="text-[2rem] font-medium tracking-tight text-slate-950">
+          <div className="border-b border-slate-200 px-5 py-5 sm:px-6 sm:py-6 lg:px-8">
+            <h2 className="text-2xl font-medium tracking-tight text-slate-950 sm:text-[1.75rem] lg:text-[2rem]">
               Recent Articles
             </h2>
           </div>
@@ -123,12 +123,12 @@ const AdminDashboard = () => {
             {recentArticles.map((article) => (
               <div
                 key={article.id}
-                className="border-b border-slate-100 px-8 py-7 last:border-b-0"
+                className="border-b border-slate-100 px-5 py-5 last:border-b-0 sm:px-6 sm:py-6 lg:px-8 lg:py-7"
               >
-                <p className="text-[1.2rem] font-medium text-slate-950">
+                <p className="text-[1.05rem] font-medium text-slate-950 sm:text-[1.15rem] lg:text-[1.2rem]">
                   {article.title}
                 </p>
-                <p className="mt-2 text-[1rem] font-normal text-slate-500">
+                <p className="mt-2 text-[0.96rem] font-normal text-slate-500 sm:text-[1rem]">
                   {article.author} - {article.publishedAgo}
                 </p>
               </div>
@@ -137,26 +137,26 @@ const AdminDashboard = () => {
         </article>
 
         <article className="rounded-md border border-slate-200 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.04)]">
-          <div className="border-b border-slate-200 px-8 py-6">
-            <h2 className="text-[2rem] font-medium tracking-tight text-slate-950">
+          <div className="border-b border-slate-200 px-5 py-5 sm:px-6 sm:py-6 lg:px-8">
+            <h2 className="text-2xl font-medium tracking-tight text-slate-950 sm:text-[1.75rem] lg:text-[2rem]">
               Popular Topics
             </h2>
           </div>
 
-          <div className="space-y-7 px-8 py-7">
+          <div className="space-y-5 px-5 py-5 sm:space-y-6 sm:px-6 sm:py-6 lg:space-y-7 lg:px-8 lg:py-7">
             {subjectSummary.map((topic) => (
               <div
                 key={topic.label}
-                className="flex items-center justify-between gap-4"
+                className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-4"
               >
                 <div className="flex items-center gap-4">
                   <span className={`h-4 w-4 rounded-full ${topic.color}`} />
-                  <p className="text-[1.15rem] font-normal text-slate-900">
+                  <p className="text-[1.05rem] font-normal text-slate-900 sm:text-[1.15rem]">
                     {topic.label}
                   </p>
                 </div>
 
-                <p className="text-[1rem] font-normal text-slate-500">
+                <p className="text-[0.96rem] font-normal text-slate-500 sm:text-[1rem]">
                   {topic.count}
                 </p>
               </div>

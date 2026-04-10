@@ -7,19 +7,19 @@ const CategoryCard = ({ category }) => {
   return (
     <Link
       to={`/admin/knowledge-base?subject=${encodeURIComponent(category.subject)}`}
-      className="flex items-center gap-6 rounded-md border border-slate-200 bg-white px-7 py-7 shadow-[0_6px_20px_rgba(15,23,42,0.04)]"
+      className="flex flex-col items-start gap-4 rounded-md border border-slate-200 bg-white px-5 py-5 shadow-[0_6px_20px_rgba(15,23,42,0.04)] sm:flex-row sm:items-center sm:gap-5 sm:px-6 sm:py-6 lg:gap-6 lg:px-7 lg:py-7"
     >
       <div
-        className={`flex h-16 w-16 items-center justify-center rounded-md ${category.iconBackground} ${category.iconColor}`}
+        className={`flex h-14 w-14 items-center justify-center rounded-md sm:h-16 sm:w-16 ${category.iconBackground} ${category.iconColor}`}
       >
-        <Icon className="h-8 w-8" strokeWidth={1.7} />
+        <Icon className="h-7 w-7 sm:h-8 sm:w-8" strokeWidth={1.7} />
       </div>
 
       <div>
-        <h2 className="text-[1.9rem] font-medium tracking-tight text-slate-950">
+        <h2 className="text-[1.55rem] font-medium tracking-tight text-slate-950 sm:text-[1.7rem] lg:text-[1.9rem]">
           {category.subject}
         </h2>
-        <p className="mt-1 text-[1.05rem] font-normal text-slate-500">
+        <p className="mt-1 text-[0.98rem] font-normal text-slate-500 sm:text-[1.05rem]">
           {category.count} {category.count > 1 ? "materials" : "material"}
         </p>
       </div>

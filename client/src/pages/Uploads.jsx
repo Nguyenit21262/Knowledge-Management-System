@@ -26,14 +26,14 @@ const uploadRows = [
 
 const Uploads = () => {
   return (
-    <main className="min-h-[calc(100vh-117px)] bg-[#f6f9ff] px-10 py-10">
-      <div className="mx-auto max-w-screen-2xl">
-        <h1 className="mb-6 text-[2rem] font-medium tracking-tight text-slate-950">
+    <main className="min-h-[calc(100vh-97px)] bg-[#f6f9ff] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 xl:px-10">
+      <div className="mx-auto max-w-[1440px]">
+        <h1 className="mb-6 text-3xl font-medium tracking-tight text-slate-950 sm:text-[2rem]">
           Uploads
         </h1>
 
-        <section className="overflow-hidden border border-slate-200 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.05)]">
-          <div className="grid grid-cols-[minmax(0,1.7fr)_120px_140px_140px_140px] border-b border-slate-200 px-8 py-5 text-[1rem] font-medium text-slate-700">
+        <section className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.05)]">
+          <div className="hidden grid-cols-[minmax(0,1.7fr)_120px_140px_140px_140px] border-b border-slate-200 px-8 py-5 text-[1rem] font-medium text-slate-700 lg:grid">
             <div>Document Title</div>
             <div className="text-center">Views</div>
             <div className="text-center">Ratings</div>
@@ -45,10 +45,10 @@ const Uploads = () => {
             {uploadRows.map((row) => (
               <article
                 key={row.id}
-                className="grid grid-cols-[minmax(0,1.7fr)_120px_140px_140px_140px] items-center border-b border-slate-100 px-8 py-6 last:border-b-0"
+                className="grid grid-cols-1 gap-4 border-b border-slate-100 px-5 py-5 last:border-b-0 sm:px-6 sm:py-6 lg:grid-cols-[minmax(0,1.7fr)_120px_140px_140px_140px] lg:items-center lg:gap-0 lg:px-8"
               >
                 <div className="flex items-start gap-4">
-                  <div className="mt-1 flex h-10 w-10 items-center justify-center bg-slate-100 text-[var(--theme-blue)]">
+                  <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-[var(--theme-blue)]">
                     <FileText className="h-5 w-5" strokeWidth={1.7} />
                   </div>
 
@@ -62,22 +62,28 @@ const Uploads = () => {
                   </div>
                 </div>
 
-                <div className="text-center text-[1.05rem] font-normal text-slate-700">
+                <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-[0.98rem] font-normal text-slate-700 lg:block lg:rounded-none lg:bg-transparent lg:px-0 lg:py-0 lg:text-center lg:text-[1.05rem]">
+                  <span className="font-medium text-slate-500 lg:hidden">Views</span>
                   {row.views}
                 </div>
 
-                <div className="flex items-center justify-center gap-2 text-[1rem] font-normal text-slate-500">
-                  <ThumbsUp className="h-4 w-4" strokeWidth={1.7} />
-                  {row.rating}
+                <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-[0.98rem] font-normal text-slate-500 lg:justify-center lg:gap-2 lg:rounded-none lg:bg-transparent lg:px-0 lg:py-0 lg:text-[1rem]">
+                  <span className="font-medium text-slate-500 lg:hidden">Ratings</span>
+                  <span className="flex items-center gap-2">
+                    <ThumbsUp className="h-4 w-4" strokeWidth={1.7} />
+                    {row.rating}
+                  </span>
                 </div>
 
-                <div className="text-center text-[1rem] font-normal text-slate-500">
+                <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-[0.98rem] font-normal text-slate-500 lg:block lg:rounded-none lg:bg-transparent lg:px-0 lg:py-0 lg:text-center lg:text-[1rem]">
+                  <span className="font-medium text-slate-500 lg:hidden">Anonymous</span>
                   {row.anonymous}
                 </div>
 
-                <div className="flex justify-center">
+                <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 lg:justify-center lg:rounded-none lg:bg-transparent lg:px-0 lg:py-0">
+                  <span className="font-medium text-slate-500 lg:hidden">Status</span>
                   <span
-                    className={`inline-flex px-4 py-2 text-[0.95rem] font-normal ${row.statusClass}`}
+                    className={`inline-flex rounded-full px-4 py-2 text-[0.95rem] font-normal ${row.statusClass}`}
                   >
                     {row.status}
                   </span>

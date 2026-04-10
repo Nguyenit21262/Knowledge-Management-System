@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import AdminLayout from "./components/admin/AdminLayout";
@@ -17,7 +18,26 @@ import UploadNew from "./pages/UploadNew";
 import Uploads from "./pages/Uploads";
 
 const App = () => {
-  const isAdminRoute = useLocation().pathname.startsWith("/admin");
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (isAdminRoute) {
+      document.body.style.overflow = "";
+      return;
+    }
+
+    document.body.style.overflow = isSidebarOpen ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isAdminRoute, isSidebarOpen]);
 
   return (
     <>
@@ -25,9 +45,23 @@ const App = () => {
 
       {!isAdminRoute ? (
         <>
-          <Navbar />
-          <div className="flex gap-6 px-0 pb-6">
-            <Sidebar />
+          <Navbar onOpenSidebar={() => setIsSidebarOpen(true)} />
+          <div className="relative flex min-h-[calc(100vh-97px)]">
+            <div
+              className={`fixed inset-0 z-30 bg-slate-950/40 transition-opacity duration-300 lg:hidden ${
+                isSidebarOpen
+                  ? "pointer-events-auto opacity-100"
+                  : "pointer-events-none opacity-0"
+              }`}
+              onClick={() => setIsSidebarOpen(false)}
+              aria-hidden="true"
+            />
+
+            <Sidebar
+              isMobileOpen={isSidebarOpen}
+              onClose={() => setIsSidebarOpen(false)}
+            />
+
             <div className="min-w-0 flex-1">
               <Routes>
                 <Route path="/" element={<Home />} />
