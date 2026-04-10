@@ -1,14 +1,14 @@
 const express = require("express");
 const {
-  getCategories,
-  createCategory,
-} = require("../controllers/categoryController");
+  getSubjects,
+  createSubject,
+} = require("../controllers/subjectController");
 const { protect } = require("../middleware/authMiddleware");
 const { isTeacher } = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
-router.get("/", getCategories);
-router.post("/", protect, isTeacher, createCategory);
+router.get("/", getSubjects);
+router.post("/", protect, isTeacher, createSubject);
 
 module.exports = router;
