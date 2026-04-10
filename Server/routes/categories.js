@@ -1,42 +1,14 @@
-const express = require('express');
+const express = require("express");
+const {
+  getCategories,
+  createCategory,
+} = require("../controllers/categoryController");
+const { protect } = require("../middleware/authMiddleware");
+const { isTeacher } = require("../middleware/roleMiddleware");
+
 const router = express.Router();
-const Category = require('../models/Category');
-const { protect } = require('../middleware/authMiddleware');
-const { isTeacher } = require('../middleware/roleMiddleware');
 
-// GET /api/categories
-router.get('/', async (req, res) => {
-  try {
-    const categories = await Category.find().sort({ name: 1 });
-    res.json(categories);
-  } catch (err) {
-    res.status(500).json({ message: 'Lỗi server', error: err.message });
-  }
-});
-
-// POST /api/categories (teacher only)
-router.post('/', protect, isTeacher, async (req, res) => {
-  try {
-    const existing = await Category.findOne({ name: req.body.name });
-    if (existing) {
-      return res.status(400).json({ message: 'Category đã tồn tại' });
-    }
-    const category = new Category({ name: req.body.name });
-    await category.save();
-    res.status(201).json(category);
-  } catch (err) {
-    res.status(500).json({ message: 'Lỗi server', error: err.message });
-  }
-});
-
-// DELETE /api/categories/:id (teacher only)
-router.delete('/:id', protect, isTeacher, async (req, res) => {
-  try {
-    await Category.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Đã xóa category' });
-  } catch (err) {
-    res.status(500).json({ message: 'Lỗi server', error: err.message });
-  }
-});
+router.get("/", getCategories);
+router.post("/", protect, isTeacher, createCategory);
 
 module.exports = router;
