@@ -1,15 +1,15 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
 
-const uploadDir = path.join(__dirname, "../uploads");
+export const uploadDir = path.join(process.cwd(), "Server", "uploads");
 
-const ensureUploadDir = () => {
+export const ensureUploadDir = () => {
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }
 };
 
-const detectFileType = (filename = "") => {
+export const detectFileType = (filename = "") => {
   const ext = path.extname(filename).toLowerCase();
 
   if ([".mp4", ".mov", ".avi", ".mkv", ".webm"].includes(ext)) {
@@ -19,7 +19,7 @@ const detectFileType = (filename = "") => {
   return "PDF";
 };
 
-const deleteUploadedFile = (fileUrl) => {
+export const deleteUploadedFile = (fileUrl) => {
   if (!fileUrl) return;
 
   const filename = path.basename(fileUrl);
@@ -28,11 +28,4 @@ const deleteUploadedFile = (fileUrl) => {
   if (fs.existsSync(filePath)) {
     fs.unlinkSync(filePath);
   }
-};
-
-module.exports = {
-  uploadDir,
-  ensureUploadDir,
-  detectFileType,
-  deleteUploadedFile,
 };

@@ -1,13 +1,7 @@
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+import User from "../models/User.js";
+import { generateToken } from "../utils/generateToken.js";
 
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || "secretkey", {
-    expiresIn: "7d",
-  });
-};
-
-const register = async (req, res) => {
+export const register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
@@ -18,6 +12,7 @@ const register = async (req, res) => {
     }
 
     const existingUser = await User.findOne({ email: email.toLowerCase() });
+
     if (existingUser) {
       return res.status(400).json({
         message: "Email đã tồn tại",
@@ -49,7 +44,7 @@ const register = async (req, res) => {
   }
 };
 
-const login = async (req, res) => {
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -93,7 +88,7 @@ const login = async (req, res) => {
   }
 };
 
-const getMe = async (req, res) => {
+export const getMe = async (req, res) => {
   try {
     return res.json({
       id: req.user._id,
@@ -108,10 +103,4 @@ const getMe = async (req, res) => {
       error: err.message,
     });
   }
-};
-
-module.exports = {
-  register,
-  login,
-  getMe,
 };

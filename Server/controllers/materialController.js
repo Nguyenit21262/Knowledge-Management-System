@@ -1,7 +1,9 @@
-const Material = require("../models/Material");
-const Comment = require("../models/Comment");
-const { formatMaterial } = require("../utils/materialFormatter");
-const { detectFileType, deleteUploadedFile } = require("../utils/fileHelpers");
+import Material from "../models/Material.js";
+import Comment from "../models/Comment.js";
+import { formatMaterial } from "../utils/materialFormatter.js";
+import { detectFileType, deleteUploadedFile } from "../utils/fileHelpers.js";
+import path from "path";
+import { extractPdfText } from "../utils/pdfHelpers.js";
 
 const buildMaterialFilter = ({ search, subject, type, category }) => {
   const filter = {};
@@ -12,6 +14,7 @@ const buildMaterialFilter = ({ search, subject, type, category }) => {
       { description: { $regex: search, $options: "i" } },
       { subject: { $regex: search, $options: "i" } },
       { category: { $regex: search, $options: "i" } },
+      { contentText: { $regex: search, $options: "i" } },
     ];
   }
 
@@ -22,7 +25,7 @@ const buildMaterialFilter = ({ search, subject, type, category }) => {
   return filter;
 };
 
-const getMaterials = async (req, res) => {
+export const getMaterials = async (req, res) => {
   try {
     const materials = await Material.find(buildMaterialFilter(req.query))
       .populate("uploadedBy", "name role")
@@ -37,7 +40,7 @@ const getMaterials = async (req, res) => {
   }
 };
 
-const getMaterialById = async (req, res) => {
+export const getMaterialById = async (req, res) => {
   try {
     const material = await Material.findById(req.params.id).populate(
       "uploadedBy",
@@ -45,7 +48,9 @@ const getMaterialById = async (req, res) => {
     );
 
     if (!material) {
-      return res.status(404).json({ message: "Không tìm thấy tài liệu" });
+      return res.status(404).json({
+        message: "Không tìm thấy tài liệu",
+      });
     }
 
     const comments = await Comment.find({ material: req.params.id })
@@ -61,18 +66,47 @@ const getMaterialById = async (req, res) => {
   }
 };
 
-const createMaterial = async (req, res) => {
+export const createMaterial = async (req, res) => {
   try {
-    const { title, description, subject, category } = req.body;
+    console.log("=== CREATE MATERIAL HIT ===");
+    console.log("BODY:", req.body);
+    console.log("FILE:", req.file);
+
+    const body = req.body || {};
+    const title = body.title?.trim?.() || "";
+    const description = body.description?.trim?.() || "";
+    const subject = body.subject?.trim?.() || "";
+    const category = body.category?.trim?.() || "";
 
     if (!title || !subject || !category) {
-      return res
-        .status(400)
-        .json({ message: "Thiếu title, subject hoặc category" });
+      return res.status(400).json({
+        message: "Thiếu title, subject hoặc category",
+      });
     }
 
     if (!req.file) {
-      return res.status(400).json({ message: "Vui lòng chọn file để upload" });
+      return res.status(400).json({
+        message: "Vui lòng chọn file để upload",
+      });
+    }
+
+    const detectedType = detectFileType(req.file.originalname);
+    let contentText = "";
+
+    if (detectedType === "PDF") {
+      const filePath = path.join(
+        process.cwd(),
+        "Server",
+        "uploads",
+        req.file.filename,
+      );
+
+      contentText = await extractPdfText(filePath);
+
+      console.log("Extracted PDF content length:", contentText.length);
+      if (!contentText) {
+        console.log("PDF uploaded but no extractable text found.");
+      }
     }
 
     const material = await Material.create({
@@ -80,9 +114,10 @@ const createMaterial = async (req, res) => {
       description,
       subject,
       category,
-      type: detectFileType(req.file.originalname),
+      type: detectedType,
       fileUrl: `/uploads/${req.file.filename}`,
-      uploadedBy: req.user.id,
+      contentText,
+      uploadedBy: req.user?._id || req.user?.id,
     });
 
     await material.populate("uploadedBy", "name role");
@@ -92,6 +127,7 @@ const createMaterial = async (req, res) => {
       material: formatMaterial(material),
     });
   } catch (err) {
+    console.error("CREATE MATERIAL ERROR:", err);
     return res.status(500).json({
       message: "Lỗi server khi thêm tài liệu",
       error: err.message,
@@ -99,19 +135,21 @@ const createMaterial = async (req, res) => {
   }
 };
 
-const updateMaterial = async (req, res) => {
+export const updateMaterial = async (req, res) => {
   try {
-    const { title, description, subject, category } = req.body;
+    const { title, description, subject, category } = req.body || {};
     const material = await Material.findById(req.params.id);
 
     if (!material) {
-      return res.status(404).json({ message: "Không tìm thấy tài liệu" });
+      return res.status(404).json({
+        message: "Không tìm thấy tài liệu",
+      });
     }
 
-    material.title = title || material.title;
-    material.description = description ?? material.description;
-    material.subject = subject || material.subject;
-    material.category = category || material.category;
+    if (title) material.title = title;
+    if (description !== undefined) material.description = description;
+    if (subject) material.subject = subject;
+    if (category) material.category = category;
 
     await material.save();
     await material.populate("uploadedBy", "name role");
@@ -128,7 +166,7 @@ const updateMaterial = async (req, res) => {
   }
 };
 
-const incrementDownload = async (req, res) => {
+export const incrementDownload = async (req, res) => {
   try {
     const material = await Material.findByIdAndUpdate(
       req.params.id,
@@ -137,7 +175,9 @@ const incrementDownload = async (req, res) => {
     );
 
     if (!material) {
-      return res.status(404).json({ message: "Không tìm thấy tài liệu" });
+      return res.status(404).json({
+        message: "Không tìm thấy tài liệu",
+      });
     }
 
     return res.json({
@@ -152,12 +192,14 @@ const incrementDownload = async (req, res) => {
   }
 };
 
-const deleteMaterial = async (req, res) => {
+export const deleteMaterial = async (req, res) => {
   try {
     const material = await Material.findById(req.params.id);
 
     if (!material) {
-      return res.status(404).json({ message: "Không tìm thấy tài liệu" });
+      return res.status(404).json({
+        message: "Không tìm thấy tài liệu",
+      });
     }
 
     deleteUploadedFile(material.fileUrl);
@@ -173,13 +215,4 @@ const deleteMaterial = async (req, res) => {
       error: err.message,
     });
   }
-};
-
-module.exports = {
-  getMaterials,
-  getMaterialById,
-  createMaterial,
-  updateMaterial,
-  incrementDownload,
-  deleteMaterial,
 };

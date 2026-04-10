@@ -1,14 +1,14 @@
-const express = require("express");
-const {
+import express from "express";
+import {
   getSubjects,
   createSubject,
-} = require("../controllers/subjectController");
-const { protect } = require("../middleware/authMiddleware");
-const { isTeacher } = require("../middleware/roleMiddleware");
+} from "../controllers/subjectController.js";
+import { protect } from "../middleware/authMiddleware.js";
+import { isTeacher } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
 router.get("/", getSubjects);
 router.post("/", protect, isTeacher, createSubject);
 
-module.exports = router;
+export default router;

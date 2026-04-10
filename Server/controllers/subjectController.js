@@ -1,6 +1,6 @@
-const Subject = require("../models/Subject");
+import Subject from "../models/Subject.js";
 
-const getSubjects = async (req, res) => {
+export const getSubjects = async (req, res) => {
   try {
     const subjects = await Subject.find().sort({ name: 1 });
     return res.json(subjects);
@@ -12,20 +12,27 @@ const getSubjects = async (req, res) => {
   }
 };
 
-const createSubject = async (req, res) => {
+export const createSubject = async (req, res) => {
   try {
     const { name } = req.body;
 
     if (!name || !name.trim()) {
-      return res.status(400).json({ message: "Tên subject không được rỗng" });
+      return res.status(400).json({
+        message: "Tên subject không được rỗng",
+      });
     }
 
     const existing = await Subject.findOne({ name: name.trim() });
+
     if (existing) {
-      return res.status(400).json({ message: "Subject đã tồn tại" });
+      return res.status(400).json({
+        message: "Subject đã tồn tại",
+      });
     }
 
-    const subject = await Subject.create({ name: name.trim() });
+    const subject = await Subject.create({
+      name: name.trim(),
+    });
 
     return res.status(201).json({
       message: "Tạo subject thành công",
@@ -37,9 +44,4 @@ const createSubject = async (req, res) => {
       error: err.message,
     });
   }
-};
-
-module.exports = {
-  getSubjects,
-  createSubject,
 };

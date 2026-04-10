@@ -1,6 +1,6 @@
-const Category = require("../models/Category");
+import Category from "../models/Category.js";
 
-const getCategories = async (req, res) => {
+export const getCategories = async (req, res) => {
   try {
     const categories = await Category.find().sort({ name: 1 });
     return res.json(categories);
@@ -12,20 +12,27 @@ const getCategories = async (req, res) => {
   }
 };
 
-const createCategory = async (req, res) => {
+export const createCategory = async (req, res) => {
   try {
     const { name } = req.body;
 
     if (!name || !name.trim()) {
-      return res.status(400).json({ message: "Tên category không được rỗng" });
+      return res.status(400).json({
+        message: "Tên category không được rỗng",
+      });
     }
 
     const existing = await Category.findOne({ name: name.trim() });
+
     if (existing) {
-      return res.status(400).json({ message: "Category đã tồn tại" });
+      return res.status(400).json({
+        message: "Category đã tồn tại",
+      });
     }
 
-    const category = await Category.create({ name: name.trim() });
+    const category = await Category.create({
+      name: name.trim(),
+    });
 
     return res.status(201).json({
       message: "Tạo category thành công",
@@ -37,9 +44,4 @@ const createCategory = async (req, res) => {
       error: err.message,
     });
   }
-};
-
-module.exports = {
-  getCategories,
-  createCategory,
 };

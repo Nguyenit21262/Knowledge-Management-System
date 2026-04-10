@@ -1,14 +1,14 @@
-const express = require("express");
-const {
+import express from "express";
+import {
   getCategories,
   createCategory,
-} = require("../controllers/categoryController");
-const { protect } = require("../middleware/authMiddleware");
-const { isTeacher } = require("../middleware/roleMiddleware");
+} from "../controllers/categoryController.js";
+import { protect } from "../middleware/authMiddleware.js";
+import { isTeacher } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
 router.get("/", getCategories);
 router.post("/", protect, isTeacher, createCategory);
 
-module.exports = router;
+export default router;

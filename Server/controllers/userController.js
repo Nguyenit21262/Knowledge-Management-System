@@ -1,6 +1,6 @@
-const User = require("../models/User");
+import User from "../models/User.js";
 
-const getUsers = async (req, res) => {
+export const getUsers = async (req, res) => {
   try {
     const users = await User.find().select("-password").sort({ createdAt: -1 });
     return res.json(users);
@@ -10,8 +10,4 @@ const getUsers = async (req, res) => {
       error: err.message,
     });
   }
-};
-
-module.exports = {
-  getUsers,
 };

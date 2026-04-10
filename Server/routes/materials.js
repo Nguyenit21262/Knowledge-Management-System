@@ -1,15 +1,15 @@
-const express = require("express");
-const upload = require("../config/upload");
-const {
+import express from "express";
+import upload from "../config/upload.js";
+import {
   getMaterials,
   getMaterialById,
   createMaterial,
   updateMaterial,
   incrementDownload,
   deleteMaterial,
-} = require("../controllers/materialController");
-const { protect } = require("../middleware/authMiddleware");
-const { isTeacher } = require("../middleware/roleMiddleware");
+} from "../controllers/materialController.js";
+import { protect } from "../middleware/authMiddleware.js";
+import { isTeacher } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
@@ -20,4 +20,4 @@ router.put("/:id", protect, isTeacher, updateMaterial);
 router.patch("/:id/download", incrementDownload);
 router.delete("/:id", protect, isTeacher, deleteMaterial);
 
-module.exports = router;
+export default router;

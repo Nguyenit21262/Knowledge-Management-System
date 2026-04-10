@@ -1,5 +1,5 @@
-const Comment = require("../models/Comment");
-const Material = require("../models/Material");
+import Comment from "../models/Comment.js";
+import Material from "../models/Material.js";
 
 const formatComment = (comment) => ({
   id: comment._id,
@@ -9,7 +9,7 @@ const formatComment = (comment) => ({
   createdAt: comment.createdAt,
 });
 
-const getCommentsByMaterial = async (req, res) => {
+export const getCommentsByMaterial = async (req, res) => {
   try {
     const comments = await Comment.find({ material: req.params.materialId })
       .populate("author", "name role")
@@ -24,19 +24,22 @@ const getCommentsByMaterial = async (req, res) => {
   }
 };
 
-const createComment = async (req, res) => {
+export const createComment = async (req, res) => {
   try {
     const { content } = req.body;
 
     if (!content || !content.trim()) {
-      return res
-        .status(400)
-        .json({ message: "Nội dung comment không được rỗng" });
+      return res.status(400).json({
+        message: "Nội dung comment không được rỗng",
+      });
     }
 
     const material = await Material.findById(req.params.materialId);
+
     if (!material) {
-      return res.status(404).json({ message: "Không tìm thấy tài liệu" });
+      return res.status(404).json({
+        message: "Không tìm thấy tài liệu",
+      });
     }
 
     const comment = await Comment.create({
@@ -63,21 +66,23 @@ const createComment = async (req, res) => {
   }
 };
 
-const deleteComment = async (req, res) => {
+export const deleteComment = async (req, res) => {
   try {
     const comment = await Comment.findById(req.params.commentId);
 
     if (!comment) {
-      return res.status(404).json({ message: "Không tìm thấy comment" });
+      return res.status(404).json({
+        message: "Không tìm thấy comment",
+      });
     }
 
     const isOwner = comment.author.toString() === req.user.id;
     const isTeacher = req.user.role === "teacher";
 
     if (!isOwner && !isTeacher) {
-      return res
-        .status(403)
-        .json({ message: "Bạn không có quyền xóa comment này" });
+      return res.status(403).json({
+        message: "Bạn không có quyền xóa comment này",
+      });
     }
 
     await Comment.findByIdAndDelete(req.params.commentId);
@@ -85,17 +90,13 @@ const deleteComment = async (req, res) => {
       $inc: { commentsCount: -1 },
     });
 
-    return res.json({ message: "Xóa comment thành công" });
+    return res.json({
+      message: "Xóa comment thành công",
+    });
   } catch (err) {
     return res.status(500).json({
       message: "Lỗi server khi xóa comment",
       error: err.message,
     });
   }
-};
-
-module.exports = {
-  getCommentsByMaterial,
-  createComment,
-  deleteComment,
 };
