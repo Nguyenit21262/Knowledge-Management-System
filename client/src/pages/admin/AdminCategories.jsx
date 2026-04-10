@@ -73,15 +73,15 @@ const AdminCategories = () => {
     .filter(Boolean);
 
   return (
-    <main className="px-8 py-10">
-      <h1 className="text-[3rem] font-medium tracking-tight text-slate-950">
+    <main className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+      <h1 className="text-3xl font-medium tracking-tight text-slate-950 sm:text-4xl lg:text-[3rem]">
         Categories
       </h1>
-      <p className="mt-3 text-[1.15rem] font-normal text-slate-500">
+      <p className="mt-3 max-w-2xl text-base font-normal text-slate-500 sm:text-[1.08rem] lg:text-[1.15rem]">
         Browse knowledge by subject area.
       </p>
 
-      <section className="mt-10 grid grid-cols-3 gap-6">
+      <section className="mt-8 grid grid-cols-1 gap-4 sm:mt-10 sm:grid-cols-2 sm:gap-6 xl:grid-cols-3">
         {categories.map((category) => (
           <CategoryCard key={category.subject} category={category} />
         ))}

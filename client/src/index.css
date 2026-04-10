@@ -30,3 +30,18 @@ a {
 button {
   font: inherit;
 }
+
+.content-clamp-3,
+.content-clamp-4 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.content-clamp-3 {
+  -webkit-line-clamp: 3;
+}
+
+.content-clamp-4 {
+  -webkit-line-clamp: 4;
+}

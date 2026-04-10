@@ -6,6 +6,7 @@ import {
   Search,
   Settings,
   Users,
+  X,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
@@ -53,33 +54,49 @@ const adminSections = [
   },
 ];
 
-const AdminSidebar = () => {
+const AdminSidebar = ({ isOpen, onClose }) => {
   return (
-    <aside className="flex min-h-screen w-[320px] shrink-0 flex-col justify-between bg-[#1b2e5c] px-7 py-6 text-white">
+    <aside
+      id="admin-sidebar"
+      className={`fixed inset-y-0 left-0 z-40 flex w-[280px] max-w-[calc(100vw-1rem)] flex-col justify-between overflow-y-auto bg-[#1b2e5c] px-5 py-5 text-white shadow-[0_18px_48px_rgba(15,23,42,0.35)] transition-transform duration-300 sm:w-[320px] sm:px-6 sm:py-6 lg:static lg:min-h-screen lg:w-[320px] lg:shrink-0 lg:translate-x-0 lg:px-7 lg:py-6 lg:shadow-none ${
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
+    >
       <div>
-        <div className="mb-12 flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center overflow-hidden">
-            <img
-              src="/IU_icon.png"
-              alt="IU logo"
-              className="h-full w-full object-contain"
-            />
+        <div className="mb-8 flex items-start justify-between gap-4 lg:mb-12">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex h-12 w-12 items-center justify-center overflow-hidden sm:h-14 sm:w-14">
+              <img
+                src="/IU_icon.png"
+                alt="IU logo"
+                className="h-full w-full object-contain"
+              />
+            </div>
+
+            <div>
+              <h1 className="text-[1.6rem] font-medium tracking-tight text-white sm:text-[1.9rem]">
+                IU
+              </h1>
+              <p className="text-[0.98rem] font-normal text-slate-300 sm:text-[1.05rem]">
+                Knowledge Hub
+              </p>
+            </div>
           </div>
 
-          <div>
-            <h1 className="text-[1.9rem] font-medium tracking-tight text-white">
-              IU
-            </h1>
-            <p className="text-[1.05rem] font-normal text-slate-300">
-              Knowledge Hub
-            </p>
-          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-10 w-10 items-center justify-center rounded-md border border-white/10 bg-white/5 text-white lg:hidden"
+            aria-label="Close admin menu"
+          >
+            <X className="h-5 w-5" strokeWidth={1.8} />
+          </button>
         </div>
 
-        <div className="space-y-10">
+        <div className="space-y-8 lg:space-y-10">
           {adminSections.map((section) => (
             <section key={section.title}>
-              <p className="mb-4 text-[1.05rem] font-medium text-slate-300">
+              <p className="mb-4 text-[0.95rem] font-medium uppercase tracking-[0.08em] text-slate-300 sm:text-[1rem]">
                 {section.title}
               </p>
 
@@ -92,8 +109,9 @@ const AdminSidebar = () => {
                       key={item.label}
                       to={item.to}
                       end={item.end}
+                      onClick={onClose}
                       className={({ isActive }) =>
-                        `flex items-center gap-3 rounded-md px-4 py-3 text-[1.1rem] font-normal transition-colors ${
+                        `flex items-center gap-3 rounded-md px-4 py-3 text-[1rem] font-normal transition-colors sm:text-[1.05rem] lg:text-[1.1rem] ${
                           isActive
                             ? "bg-[#37508b] text-white"
                             : "text-slate-200 hover:bg-white/5 hover:text-white"
@@ -112,13 +130,15 @@ const AdminSidebar = () => {
       </div>
 
       <div className="flex items-center gap-4 border-t border-white/10 pt-6">
-        <div className="flex h-12 w-12 items-center justify-center rounded-md bg-[#37508b] text-[1.15rem] font-medium text-white">
+        <div className="flex h-11 w-11 items-center justify-center rounded-md bg-[#37508b] text-[1.05rem] font-medium text-white sm:h-12 sm:w-12 sm:text-[1.15rem]">
           A
         </div>
 
         <div>
-          <p className="text-[1.05rem] font-medium text-white">Admin User</p>
-          <p className="text-[0.95rem] font-normal text-slate-300">
+          <p className="text-[1rem] font-medium text-white sm:text-[1.05rem]">
+            Admin User
+          </p>
+          <p className="break-all text-[0.88rem] font-normal text-slate-300 sm:text-[0.95rem]">
             admin@school.edu
           </p>
         </div>

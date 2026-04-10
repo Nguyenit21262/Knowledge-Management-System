@@ -28,26 +28,26 @@ const AdminKnowledgeBase = () => {
   );
 
   return (
-    <main className="px-8 py-10">
-      <h1 className="text-[3rem] font-medium tracking-tight text-slate-950">
+    <main className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+      <h1 className="text-3xl font-medium tracking-tight text-slate-950 sm:text-4xl lg:text-[3rem]">
         Knowledge Base
       </h1>
-      <p className="mt-3 text-[1.15rem] font-normal text-slate-500">
+      <p className="mt-3 max-w-2xl text-base font-normal text-slate-500 sm:text-[1.08rem] lg:text-[1.15rem]">
         Browse and search through all learning materials.
       </p>
 
-      <div className="mt-10 flex items-center gap-4 rounded-md bg-[#faf6eb] px-6 py-5 text-slate-500">
-        <Search className="h-6 w-6" strokeWidth={1.7} />
+      <div className="mt-8 flex items-center gap-3 rounded-md bg-[#faf6eb] px-4 py-4 text-slate-500 sm:mt-10 sm:gap-4 sm:px-6 sm:py-5">
+        <Search className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" strokeWidth={1.7} />
         <input
           type="text"
           value={searchValue}
           onChange={(event) => setSearchValue(event.target.value)}
           placeholder="Search articles, topics, authors..."
-          className="w-full bg-transparent text-[1.1rem] font-normal outline-none placeholder:text-slate-400"
+          className="w-full bg-transparent text-[1rem] font-normal outline-none placeholder:text-slate-400 sm:text-[1.1rem]"
         />
       </div>
 
-      <div className="mt-10 flex flex-wrap gap-3">
+      <div className="mt-8 flex flex-wrap gap-2.5 sm:mt-10 sm:gap-3">
         {knowledgeBaseSubjects.map((subject) => {
           const isActive = subject === activeSubject;
 
@@ -62,7 +62,7 @@ const AdminKnowledgeBase = () => {
                   { replace: true }
                 );
               }}
-              className={`rounded-md px-6 py-3 text-[1.05rem] font-normal transition-colors ${
+              className={`rounded-md px-4 py-2.5 text-[0.98rem] font-normal transition-colors sm:px-6 sm:py-3 sm:text-[1.05rem] ${
                 isActive
                   ? "bg-[#253b6e] text-white"
                   : "bg-[#faf6eb] text-slate-900"
@@ -74,15 +74,15 @@ const AdminKnowledgeBase = () => {
         })}
       </div>
 
-      <section className="mt-10 grid grid-cols-2 gap-6">
+      <section className="mt-8 grid grid-cols-1 gap-4 sm:mt-10 sm:gap-6 xl:grid-cols-2">
         {filteredDocuments.map((document) => (
           <KnowledgeBaseCard key={document.id} document={document} />
         ))}
       </section>
 
       {filteredDocuments.length === 0 && (
-        <section className="mt-10 rounded-md border border-slate-200 bg-white px-8 py-12 text-center shadow-[0_6px_20px_rgba(15,23,42,0.04)]">
-          <p className="text-[1.05rem] font-normal text-slate-500">
+        <section className="mt-8 rounded-md border border-slate-200 bg-white px-5 py-10 text-center shadow-[0_6px_20px_rgba(15,23,42,0.04)] sm:mt-10 sm:px-8 sm:py-12">
+          <p className="text-[1rem] font-normal text-slate-500 sm:text-[1.05rem]">
             No materials match the current search or subject filter.
           </p>
         </section>
