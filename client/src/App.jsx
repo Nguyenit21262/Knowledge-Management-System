@@ -17,10 +17,14 @@ import Search from "./pages/Search";
 import UploadNew from "./pages/UploadNew";
 import Uploads from "./pages/Uploads";
 
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+
 const App = () => {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const isAuthRoute = location.pathname === "/login" || location.pathname === "/register";
 
   useEffect(() => {
     setIsSidebarOpen(false);
@@ -43,16 +47,15 @@ const App = () => {
     <>
       <Toaster />
 
-      {!isAdminRoute ? (
+      {!isAdminRoute && !isAuthRoute ? (
         <>
           <Navbar onOpenSidebar={() => setIsSidebarOpen(true)} />
           <div className="relative flex min-h-[calc(100vh-97px)]">
             <div
-              className={`fixed inset-0 z-30 bg-slate-950/40 transition-opacity duration-300 lg:hidden ${
-                isSidebarOpen
+              className={`fixed inset-0 z-30 bg-slate-950/40 transition-opacity duration-300 lg:hidden ${isSidebarOpen
                   ? "pointer-events-auto opacity-100"
                   : "pointer-events-none opacity-0"
-              }`}
+                }`}
               onClick={() => setIsSidebarOpen(false)}
               aria-hidden="true"
             />
@@ -81,6 +84,10 @@ const App = () => {
         </>
       ) : (
         <Routes>
+          {/* Route cho Login/Register */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="knowledge-base" element={<AdminKnowledgeBase />} />
