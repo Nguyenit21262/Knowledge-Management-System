@@ -1,20 +1,40 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { ChevronDown, Upload } from "lucide-react";
 import toast from "react-hot-toast";
-import { knowledgeBaseSubjects } from "../lib/mockDocuments";
-
-const subjectOptions = knowledgeBaseSubjects.filter(
-  (subject) => subject !== "All"
-);
+import { useNavigate } from "react-router-dom";
+import { uploadMaterial } from "../api/materials.js";
+import { httpClient } from "../api/httpClient.js";
 
 const UploadNew = () => {
+  const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     title: "",
     subject: "",
+    category: "",
     description: "",
   });
-  const [selectedFile, setSelectedFile] = useState("");
+  const [selectedFileObj, setSelectedFileObj] = useState(null);
+  const [selectedFileName, setSelectedFileName] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [subjectOptions, setSubjectOptions] = useState([]);
+  const [categoryOptions, setCategoryOptions] = useState([]);
+
+  useEffect(() => {
+    const fetchTaxonomy = async () => {
+      try {
+        const [subRes, catRes] = await Promise.all([
+          httpClient.get("/api/subjects"),
+          httpClient.get("/api/categories")
+        ]);
+        setSubjectOptions(subRes.data?.map(s => s.name) || []);
+        setCategoryOptions(catRes.data?.map(c => c.name) || []);
+      } catch (err) {
+        console.error("Failed to load taxonomy options.");
+      }
+    };
+    fetchTaxonomy();
+  }, []);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -27,13 +47,51 @@ const UploadNew = () => {
 
   const handleFileChange = (event) => {
     const file = event.target.files?.[0];
-    setSelectedFile(file ? file.name : "");
+    if (file) {
+      setSelectedFileObj(file);
+      setSelectedFileName(file.name);
+    } else {
+      setSelectedFileObj(null);
+      setSelectedFileName("");
+    }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    toast.success("Your document has been added to the upload queue.");
+
+    if (!selectedFileObj) {
+      return toast.error("Please select a file to upload.");
+    }
+    if (!formData.category.trim()) {
+      return toast.error("Please enter a category.");
+    }
+
+    setIsUploading(true);
+
+    try {
+      const payload = new FormData();
+      payload.append("title", formData.title);
+      payload.append("subject", formData.subject);
+      payload.append("category", formData.category);
+      payload.append("description", formData.description);
+      payload.append("file", selectedFileObj);
+
+      await uploadMaterial(payload);
+      toast.success("Document uploaded successfully.");
+      navigate("/uploads");
+    } catch (error) {
+      toast.error(error.message || "Failed to upload document.");
+    } finally {
+      setIsUploading(false);
+    }
   };
+
+  const isFormValid = Boolean(
+    formData.title.trim() &&
+    formData.subject &&
+    formData.category &&
+    selectedFileObj
+  );
 
   return (
     <main className="min-h-[calc(100vh-117px)]  px-10 py-16">
@@ -57,7 +115,7 @@ const UploadNew = () => {
               htmlFor="title"
               className="mb-4 block text-[1.2rem] font-medium text-slate-950"
             >
-              Title
+              Title <span className="text-red-500">*</span>
             </label>
             <input
               id="title"
@@ -75,24 +133,54 @@ const UploadNew = () => {
               htmlFor="subject"
               className="mb-4 block text-[1.2rem] font-medium text-slate-950"
             >
-              Subject
+              Subject <span className="text-red-500">*</span>
             </label>
 
             <div className="relative">
-              <select
+              <input
                 id="subject"
                 name="subject"
+                list="subject-list"
                 value={formData.subject}
                 onChange={handleChange}
-                className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-6 py-5 pr-14 text-[1.1rem] font-normal text-slate-700 outline-none"
-              >
-                <option value="">Select subject</option>
+                placeholder="Select or type a new subject"
+                className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-6 py-5 pr-14 text-[1.1rem] font-normal text-slate-700 outline-none placeholder:text-slate-400"
+              />
+              <datalist id="subject-list">
                 {subjectOptions.map((subject) => (
-                  <option key={subject} value={subject}>
-                    {subject}
-                  </option>
+                  <option key={subject} value={subject} />
                 ))}
-              </select>
+              </datalist>
+
+              <ChevronDown
+                className="pointer-events-none absolute right-5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
+                strokeWidth={1.8}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="category"
+              className="mb-4 block text-[1.2rem] font-medium text-slate-950"
+            >
+              Category <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <input
+                id="category"
+                name="category"
+                list="category-list"
+                value={formData.category}
+                onChange={handleChange}
+                placeholder="Select or type a new category"
+                className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-6 py-5 pr-14 text-[1.1rem] font-normal text-slate-700 outline-none placeholder:text-slate-400"
+              />
+              <datalist id="category-list">
+                {categoryOptions.map((category) => (
+                  <option key={category} value={category} />
+                ))}
+              </datalist>
 
               <ChevronDown
                 className="pointer-events-none absolute right-5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
@@ -121,7 +209,7 @@ const UploadNew = () => {
 
           <div>
             <p className="mb-4 block text-[1.2rem] font-medium text-slate-950">
-              Attachment
+              Attachment <span className="text-red-500">*</span>
             </p>
 
             <button
@@ -140,9 +228,9 @@ const UploadNew = () => {
                 PDF, DOCX, PPTX, images (up to 20MB)
               </p>
 
-              {selectedFile && (
+              {selectedFileName && (
                 <p className="mt-4 text-[1rem] font-normal text-[var(--theme-blue)]">
-                  Selected file: {selectedFile}
+                  Selected file: {selectedFileName}
                 </p>
               )}
             </button>
@@ -158,10 +246,11 @@ const UploadNew = () => {
 
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-[var(--theme-blue)] px-6 py-5 text-[1.15rem] font-medium text-white"
+            disabled={isUploading || !isFormValid}
+            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-[var(--theme-blue)] px-6 py-5 text-[1.15rem] font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Upload className="h-5 w-5" strokeWidth={1.8} />
-            Upload Document
+            {isUploading ? "Uploading..." : "Upload Document"}
           </button>
         </form>
       </div>

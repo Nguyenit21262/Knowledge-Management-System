@@ -65,6 +65,11 @@ const MaterialSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    views: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     commentsCount: {
       type: Number,
       default: 0,

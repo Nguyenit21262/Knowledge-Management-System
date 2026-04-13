@@ -28,6 +28,12 @@ const UserSchema = new mongoose.Schema(
       default: "student",
       index: true,
     },
+    bookmarks: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Material",
+      },
+    ],
   },
   {
     timestamps: true,
@@ -43,6 +49,7 @@ UserSchema.methods.toSafeObject = function () {
     name: this.name,
     email: this.email,
     role: this.role,
+    bookmarks: this.bookmarks || [],
     createdAt: this.createdAt,
     updatedAt: this.updatedAt,
   };

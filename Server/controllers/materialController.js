@@ -3,7 +3,11 @@ import Category from "../models/Category.js";
 import Comment from "../models/Comment.js";
 import Material from "../models/Material.js";
 import Subject from "../models/Subject.js";
-import { detectFileType, deleteUploadedFile } from "../utils/fileHelpers.js";
+import {
+  detectFileType,
+  deleteUploadedFile,
+  uploadDir,
+} from "../utils/fileHelpers.js";
 import { formatMaterial } from "../utils/materialFormatter.js";
 import { extractPdfText } from "../utils/pdfHelpers.js";
 import { normalizeWhitespace } from "../utils/normalizeText.js";
@@ -12,12 +16,16 @@ import {
   buildExactInsensitiveRegex,
 } from "../utils/regexUtils.js";
 
-const buildMaterialFilter = ({ search, subject, type, category }) => {
+const buildMaterialFilter = ({ search, subject, type, category, uploadedBy }) => {
   const filter = {};
   const normalizedSearch = normalizeWhitespace(search);
   const normalizedSubject = normalizeWhitespace(subject);
   const normalizedCategory = normalizeWhitespace(category);
   const normalizedType = normalizeWhitespace(type);
+
+  if (uploadedBy) {
+    filter.uploadedBy = uploadedBy;
+  }
 
   if (normalizedSearch) {
     const searchRegex = buildContainsInsensitiveRegex(normalizedSearch);
@@ -60,21 +68,21 @@ const normalizeMaterialPayload = (body = {}) => ({
 });
 
 const resolveMaterialTaxonomy = async ({ subject, category }) => {
-  const [subjectDoc, categoryDoc] = await Promise.all([
+  let [subjectDoc, categoryDoc] = await Promise.all([
     subject
-      ? Subject.findOne({ name: buildExactInsensitiveRegex(subject) }).lean()
+      ? Subject.findOne({ name: buildExactInsensitiveRegex(subject) })
       : null,
     category
-      ? Category.findOne({ name: buildExactInsensitiveRegex(category) }).lean()
+      ? Category.findOne({ name: buildExactInsensitiveRegex(category) })
       : null,
   ]);
 
   if (subject && !subjectDoc) {
-    return { error: `Subject "${subject}" does not exist.` };
+    subjectDoc = await Subject.create({ name: subject });
   }
 
   if (category && !categoryDoc) {
-    return { error: `Category "${category}" does not exist.` };
+    categoryDoc = await Category.create({ name: category });
   }
 
   return {
@@ -125,7 +133,11 @@ export const getMaterials = async (req, res) => {
 
 export const getMaterialById = async (req, res) => {
   try {
-    const material = await Material.findById(req.params.id)
+    const material = await Material.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { views: 1 } },
+      { new: true }
+    )
       .populate("uploadedBy", "name role")
       .lean();
 
@@ -169,13 +181,7 @@ export const createMaterial = async (req, res) => {
     let contentText = "";
 
     if (detectedType === "PDF") {
-      const filePath = path.join(
-        process.cwd(),
-        "Server",
-        "uploads",
-        req.file.filename,
-      );
-
+      const filePath = path.join(uploadDir, req.file.filename);
       contentText = await extractPdfText(filePath);
     }
 
@@ -353,6 +359,27 @@ export const deleteMaterial = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       message: "Server error while deleting material.",
+      error: err.message,
+    });
+  }
+};
+
+export const downloadMaterialFile = async (req, res) => {
+  try {
+    const material = await Material.findById(req.params.id);
+
+    if (!material || !material.fileUrl) {
+      return res.status(404).json({ message: "File not found." });
+    }
+
+    const filename = material.fileUrl.split("/").pop();
+    const filePath = path.join(uploadDir, filename);
+
+    // Provide Content-Disposition to force the browser to strictly Download
+    return res.download(filePath, `${material.title.replace(/[^a-zA-Z0-9-_\.]/g, '_')}${path.extname(filename)}`);
+  } catch (err) {
+    return res.status(500).json({
+      message: "Server error during file download.",
       error: err.message,
     });
   }

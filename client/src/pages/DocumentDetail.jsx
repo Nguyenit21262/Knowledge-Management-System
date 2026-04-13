@@ -1,12 +1,57 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import DocumentComments from '../components/DocumentComments'
 import DocumentOverview from '../components/DocumentOverview'
-import { getDocumentById } from '../lib/mockDocuments'
+import { getMaterialById } from '../api/materials.js'
+import toast from 'react-hot-toast'
+
+const formatDate = (dateString) => {
+  if (!dateString) return "Unknown Date";
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
 
 const DocumentDetail = () => {
   const { documentId } = useParams()
-  const document = getDocumentById(documentId)
+  const [document, setDocument] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchDocument = async () => {
+      try {
+        const data = await getMaterialById(documentId);
+        
+        // Map backend formatting to exactly what the UI components expect
+        const mappedDocument = {
+          ...data,
+          date: formatDate(data.date),
+          comments: (data.comments || []).map(comment => ({
+            ...comment,
+            role: comment.authorRole,
+            date: formatDate(comment.createdAt)
+          }))
+        };
+        
+        setDocument(mappedDocument);
+      } catch (error) {
+        toast.error("Failed to load document details.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchDocument();
+  }, [documentId])
+
+  if (isLoading) {
+    return (
+      <main className="min-h-[calc(100vh-117px)] bg-[#f6f9ff] px-10 py-12 flex items-center justify-center">
+        <div className="text-xl text-slate-500">Loading document...</div>
+      </main>
+    )
+  }
 
   if (!document) {
     return (
@@ -16,7 +61,7 @@ const DocumentDetail = () => {
             Document not found
           </h1>
           <p className="mb-8 text-[1.1rem] text-slate-600">
-            The document you are looking for is not available in the mock data yet.
+            The document you are looking for is not available or has been deleted.
           </p>
           <Link
             to="/"

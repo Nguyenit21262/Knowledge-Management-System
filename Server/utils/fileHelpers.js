@@ -1,7 +1,11 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from 'url';
 
-export const uploadDir = path.join(process.cwd(), "Server", "uploads");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export const uploadDir = path.join(__dirname, "..", "uploads");
 
 export const ensureUploadDir = () => {
   if (!fs.existsSync(uploadDir)) {

@@ -13,6 +13,7 @@ import commentRoutes from "./routes/comments.js";
 import categoryRoutes from "./routes/categories.js";
 import subjectRoutes from "./routes/subjects.js";
 import userRoutes from "./routes/users.js";
+import { uploadDir } from "./utils/fileHelpers.js";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -41,10 +42,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(
-  "/uploads",
-  express.static(path.join(process.cwd(), "Server", "uploads")),
-);
+app.use("/uploads", express.static(uploadDir));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/materials", materialRoutes);

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Bookmark,
   ChevronLeft,
@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { getUserMaterials } from "../api/materials.js";
 
 const sidebarUser = {
   name: "Guest User",
@@ -34,10 +35,25 @@ const formatRole = (role = "") => {
 
 const Sidebar = ({ user = sidebarUser, isMobileOpen, onClose }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [uploadCount, setUploadCount] = useState(0);
   const location = useLocation();
   const isExpanded = !isCollapsed;
   const safeUser = user || sidebarUser;
   const userInitial = safeUser.name.charAt(0).toUpperCase();
+
+  useEffect(() => {
+    let isMounted = true;
+    if (safeUser?._id || safeUser?.id) {
+      getUserMaterials(safeUser._id || safeUser.id)
+        .then((data) => {
+          if (isMounted) setUploadCount(data.length);
+        })
+        .catch(() => {});
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [safeUser]);
 
   return (
     <aside
@@ -107,7 +123,7 @@ const Sidebar = ({ user = sidebarUser, isMobileOpen, onClose }) => {
           <div className="mb-6 grid grid-cols-2 gap-4 text-center">
             <div>
               <p className="text-[1.45rem] font-medium text-slate-950">
-                {safeUser.uploads || 0}
+                {uploadCount || 0}
               </p>
               <p className="text-[0.95rem] font-normal text-slate-500">
                 Uploads

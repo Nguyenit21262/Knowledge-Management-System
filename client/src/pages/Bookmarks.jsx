@@ -1,39 +1,49 @@
-import React from "react";
-import { Bookmark, Trash2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Bookmark, Trash2, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
-import { mockDocuments } from "../lib/mockDocuments";
-
-const savedRows = [
-  {
-    documentId: "introduction-to-photosynthesis",
-    savedAt: "Saved on Apr 7, 2026",
-  },
-  {
-    documentId: "quadratic-equations-explained",
-    savedAt: "Saved on Apr 6, 2026",
-  },
-  {
-    documentId: "newtons-laws-of-motion",
-    savedAt: "Saved on Apr 5, 2026",
-  },
-];
-
-const bookmarkedDocuments = savedRows
-  .map((item) => {
-    const document = mockDocuments.find(
-      (entry) => entry.id === item.documentId
-    );
-
-    return document
-      ? {
-          ...document,
-          savedAt: item.savedAt,
-        }
-      : null;
-  })
-  .filter(Boolean);
+import { getAllMaterials } from "../api/materials.js";
+import { toggleBookmark } from "../api/users.js";
+import { useAppContext } from "../context/useAppContext.js";
+import toast from "react-hot-toast";
 
 const Bookmarks = () => {
+  const { user, refreshCurrentUser } = useAppContext();
+  const [bookmarkedDocuments, setBookmarkedDocuments] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBookmarks = async () => {
+      if (!user || !user.bookmarks || user.bookmarks.length === 0) {
+        setBookmarkedDocuments([]);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const allMaterials = await getAllMaterials();
+        const myBookmarks = allMaterials.filter(doc => user.bookmarks.includes(doc.id));
+        setBookmarkedDocuments(myBookmarks);
+      } catch (error) {
+        toast.error("Failed to load your bookmarks.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBookmarks();
+  }, [user]);
+
+  const removeBookmark = async (documentId) => {
+    try {
+      await toggleBookmark(documentId);
+      await refreshCurrentUser();
+      setBookmarkedDocuments((prev) => prev.filter((doc) => doc.id !== documentId));
+      toast.success("Removed from bookmarks");
+    } catch {
+      toast.error("Failed to remove bookmark");
+    }
+  };
+
   return (
     <main className="min-h-[calc(100vh-117px)] bg-[#f6f9ff] px-10 py-10">
       <div className="mx-auto max-w-screen-2xl">
@@ -51,39 +61,57 @@ const Bookmarks = () => {
         </div>
 
         <section className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.05)]">
-          {bookmarkedDocuments.map((document) => (
-            <article
-              key={document.id}
-              className="flex items-center justify-between gap-6 border-b border-slate-100 px-6 py-6 last:border-b-0"
-            >
-              <div className="min-w-0">
-                <div className="mb-3 flex flex-wrap items-center gap-3 text-[0.98rem] font-normal text-slate-500">
-                  <span className="rounded-full bg-[#fbf1dd] px-3 py-1 text-[0.9rem] text-slate-900">
-                    {document.subject}
-                  </span>
-                  <span>{document.savedAt}</span>
+          {isLoading ? (
+            <div className="px-6 py-10 text-center text-[1.05rem] text-slate-500">
+              Loading your bookmarks...
+            </div>
+          ) : bookmarkedDocuments.length === 0 ? (
+            <div className="px-6 py-10 text-center text-[1.05rem] text-slate-500">
+              You haven't bookmarked any documents yet.
+            </div>
+          ) : (
+            bookmarkedDocuments.map((document) => (
+              <article
+                key={document.id}
+                className="flex items-center justify-between gap-6 border-b border-slate-100 px-6 py-6 last:border-b-0 hover:bg-slate-50 transition-colors"
+              >
+                <div className="min-w-0">
+                  <div className="mb-3 flex flex-wrap items-center gap-3 text-[0.98rem] font-normal text-slate-500">
+                    <span className="rounded-full bg-[#fbf1dd] px-3 py-1 text-[0.9rem] text-slate-900">
+                      {document.subject}
+                    </span>
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-[0.9rem]">
+                      {document.category}
+                    </span>
+                    <div className="flex items-center gap-1.5 ml-2 text-slate-400">
+                      <Eye className="h-4 w-4" strokeWidth={1.7} />
+                      <span className="text-[0.95rem]">{document.views || 0}</span>
+                    </div>
+                  </div>
+
+                  <Link
+                    to={`/documents/${document.id}`}
+                    className="block text-[1.65rem] font-medium tracking-tight text-slate-950 hover:text-slate-700 transition-colors"
+                  >
+                    {document.title}
+                  </Link>
+
+                  <p className="mt-2 text-[1.05rem] font-normal text-slate-500">
+                    {document.author}
+                  </p>
                 </div>
 
-                <Link
-                  to={`/documents/${document.id}`}
-                  className="block text-[1.65rem] font-medium tracking-tight text-slate-950"
+                <button
+                  type="button"
+                  onClick={() => removeBookmark(document.id)}
+                  title="Remove from bookmarks"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-red-500 hover:bg-red-50 transition-colors"
                 >
-                  {document.title}
-                </Link>
-
-                <p className="mt-2 text-[1.05rem] font-normal text-slate-500">
-                  {document.author}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-500"
-              >
-                <Trash2 className="h-5 w-5" strokeWidth={1.7} />
-              </button>
-            </article>
-          ))}
+                  <Trash2 className="h-5 w-5" strokeWidth={1.7} />
+                </button>
+              </article>
+            ))
+          )}
         </section>
       </div>
     </main>

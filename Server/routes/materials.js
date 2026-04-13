@@ -7,6 +7,7 @@ import {
   updateMaterial,
   incrementDownload,
   deleteMaterial,
+  downloadMaterialFile,
 } from "../controllers/materialController.js";
 import userAuth from "../middleware/userAuth.js";
 
@@ -17,6 +18,7 @@ router.get("/:id", getMaterialById);
 router.post("/", userAuth, upload.single("file"), createMaterial);
 router.put("/:id", userAuth, updateMaterial);
 router.patch("/:id/download", incrementDownload);
+router.get("/:id/download-file", downloadMaterialFile);
 router.delete("/:id", userAuth, deleteMaterial);
 
 export default router;

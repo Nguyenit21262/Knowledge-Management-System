@@ -17,6 +17,7 @@ export const formatMaterial = (material, comments = []) => ({
   author: material.uploadedBy?.name || "Unknown",
   authorRole: material.uploadedBy?.role || "student",
   date: material.createdAt,
+  views: material.views || 0,
   downloads: material.downloads || 0,
   commentsCount: material.commentsCount || 0,
   fileUrl: material.fileUrl,
