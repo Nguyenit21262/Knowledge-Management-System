@@ -1,10 +1,10 @@
 import express from "express";
 import { getUsers } from "../controllers/userController.js";
-import { protect } from "../middleware/authMiddleware.js";
-import { isTeacher } from "../middleware/roleMiddleware.js";
+import userAuth from "../middleware/userAuth.js";
+import { isAdmin } from "../middleware/adminAuth.js";
 
 const router = express.Router();
 
-router.get("/", protect, isTeacher, getUsers);
+router.get("/", userAuth, isAdmin, getUsers);
 
 export default router;

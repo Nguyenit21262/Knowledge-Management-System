@@ -1,89 +1,153 @@
 import User from "../models/User.js";
-import { generateToken } from "../utils/generateToken.js";
+import generateToken from "../utils/generateToken.js";
+import { comparePassword, hashPassword } from "../utils/password.js";
+
+const SELF_REGISTER_ROLES = new Set(["student", "teacher"]);
+const MIN_PASSWORD_LENGTH = 6;
+
+const getInputString = (value) => (typeof value === "string" ? value : "");
+
+const buildCurrentUserResponse = (user) => user.toSafeObject();
+
+const buildAuthResponse = (res, user) => ({
+  token: generateToken(res, user._id),
+  user: buildCurrentUserResponse(user),
+});
 
 export const register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const name = getInputString(req.body?.name).trim();
+    const email = getInputString(req.body?.email).trim().toLowerCase();
+    const password = getInputString(req.body?.password);
+    const requestedRole = getInputString(req.body?.role).trim().toLowerCase();
 
     if (!name || !email || !password) {
       return res.status(400).json({
-        message: "Vui lòng nhập đầy đủ thông tin",
+        success: false,
+        message: "Name, email, and password are required.",
       });
     }
 
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      return res.status(400).json({
+        success: false,
+        message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
+      });
+    }
+
+    const existingUser = await User.findOne({ email });
 
     if (existingUser) {
       return res.status(400).json({
-        message: "Email đã tồn tại",
+        success: false,
+        message: "Email already exists.",
       });
     }
+
+    const role = SELF_REGISTER_ROLES.has(requestedRole)
+      ? requestedRole
+      : "student";
+    const hashedPassword = await hashPassword(password);
 
     const user = await User.create({
       name,
       email,
-      password,
-      role: role || "student",
+      password: hashedPassword,
+      role,
     });
 
     return res.status(201).json({
-      message: "Đăng ký thành công",
-      token: generateToken(user._id),
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      success: true,
+      message: "Registration successful. Please log in.",
+      user: buildCurrentUserResponse(user),
     });
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already exists.",
+      });
+    }
+
+    if (err.name === "ValidationError") {
+      return res.status(400).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    console.error("Register error:", err);
+
     return res.status(500).json({
-      message: "Lỗi server khi đăng ký",
-      error: err.message,
+      success: false,
+      message: "Server error while registering user.",
     });
   }
 };
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = getInputString(req.body?.email).trim().toLowerCase();
+    const password = getInputString(req.body?.password);
 
     if (!email || !password) {
       return res.status(400).json({
-        message: "Vui lòng nhập email và mật khẩu",
+        success: false,
+        message: "Email and password are required.",
       });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
       return res.status(401).json({
-        message: "Sai email hoặc mật khẩu",
+        success: false,
+        message: "Invalid email or password.",
       });
     }
 
-    const isMatch = await user.matchPassword(password);
+    const isMatch = await comparePassword(password, user.password);
 
     if (!isMatch) {
       return res.status(401).json({
-        message: "Sai email hoặc mật khẩu",
+        success: false,
+        message: "Invalid email or password.",
       });
     }
 
     return res.json({
-      message: "Đăng nhập thành công",
-      token: generateToken(user._id),
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      success: true,
+      message: "Login successful.",
+      ...buildAuthResponse(res, user),
     });
   } catch (err) {
+    console.error("Login error:", err);
+
     return res.status(500).json({
-      message: "Lỗi server khi đăng nhập",
-      error: err.message,
+      success: false,
+      message: "Server error while logging in.",
+    });
+  }
+};
+
+export const logout = async (req, res) => {
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    });
+
+    return res.json({
+      success: true,
+      message: "Logout successful.",
+    });
+  } catch (err) {
+    console.error("Logout error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error while logging out.",
     });
   }
 };
@@ -91,16 +155,15 @@ export const login = async (req, res) => {
 export const getMe = async (req, res) => {
   try {
     return res.json({
-      id: req.user._id,
-      name: req.user.name,
-      email: req.user.email,
-      role: req.user.role,
-      createdAt: req.user.createdAt,
+      success: true,
+      user: buildCurrentUserResponse(req.user),
     });
   } catch (err) {
+    console.error("Get current user error:", err);
+
     return res.status(500).json({
-      message: "Lỗi server khi lấy thông tin user",
-      error: err.message,
+      success: false,
+      message: "Server error while fetching user profile.",
     });
   }
 };

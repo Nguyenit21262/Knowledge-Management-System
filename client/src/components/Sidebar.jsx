@@ -11,10 +11,10 @@ import {
 import { Link, useLocation } from "react-router-dom";
 
 const sidebarUser = {
-  name: "tranvannguyen24012003",
-  role: "Student",
-  uploads: 6,
-  upvotes: 2,
+  name: "Guest User",
+  role: "guest",
+  uploads: 0,
+  upvotes: 0,
 };
 
 const navItems = [
@@ -24,11 +24,20 @@ const navItems = [
   { label: "Bookmarks", to: "/bookmarks", icon: Bookmark },
 ];
 
+const formatRole = (role = "") => {
+  if (!role) {
+    return "Guest";
+  }
+
+  return role.charAt(0).toUpperCase() + role.slice(1);
+};
+
 const Sidebar = ({ user = sidebarUser, isMobileOpen, onClose }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
   const isExpanded = !isCollapsed;
-  const userInitial = user.name.charAt(0).toUpperCase();
+  const safeUser = user || sidebarUser;
+  const userInitial = safeUser.name.charAt(0).toUpperCase();
 
   return (
     <aside
@@ -58,11 +67,11 @@ const Sidebar = ({ user = sidebarUser, isMobileOpen, onClose }) => {
 
           {isExpanded && (
             <div className="min-w-0">
-              <h2 className="mb-1 text-[1.15rem] font-medium tracking-tight text-slate-950">
-                Nguyen
+              <h2 className="mb-1 truncate text-[1.15rem] font-medium tracking-tight text-slate-950">
+                {safeUser.name}
               </h2>
               <p className="text-[0.95rem] font-normal text-slate-500">
-                {user.role}
+                {formatRole(safeUser.role)}
               </p>
             </div>
           )}
@@ -98,7 +107,7 @@ const Sidebar = ({ user = sidebarUser, isMobileOpen, onClose }) => {
           <div className="mb-6 grid grid-cols-2 gap-4 text-center">
             <div>
               <p className="text-[1.45rem] font-medium text-slate-950">
-                {user.uploads}
+                {safeUser.uploads || 0}
               </p>
               <p className="text-[0.95rem] font-normal text-slate-500">
                 Uploads
@@ -107,7 +116,7 @@ const Sidebar = ({ user = sidebarUser, isMobileOpen, onClose }) => {
 
             <div>
               <p className="text-[1.45rem] font-medium text-slate-950">
-                {user.upvotes}
+                {safeUser.upvotes || 0}
               </p>
               <p className="text-[0.95rem] font-normal text-slate-500">
                 Upvotes
@@ -115,13 +124,14 @@ const Sidebar = ({ user = sidebarUser, isMobileOpen, onClose }) => {
             </div>
           </div>
 
-          <button
-            type="button"
+          <Link
+            to="/uploads/new"
+            onClick={onClose}
             className="mb-6 flex w-full items-center justify-center gap-2 rounded-full bg-[var(--theme-blue)] px-5 py-3 text-[1.05rem] font-medium text-white"
           >
             <span className="text-[1.35rem] leading-none">+</span>
             New
-          </button>
+          </Link>
         </>
       )}
 

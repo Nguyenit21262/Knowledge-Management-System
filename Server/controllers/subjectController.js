@@ -1,12 +1,14 @@
 import Subject from "../models/Subject.js";
+import { normalizeWhitespace } from "../utils/normalizeText.js";
+import { buildExactInsensitiveRegex } from "../utils/regexUtils.js";
 
 export const getSubjects = async (req, res) => {
   try {
-    const subjects = await Subject.find().sort({ name: 1 });
+    const subjects = await Subject.find().sort({ name: 1 }).lean();
     return res.json(subjects);
   } catch (err) {
     return res.status(500).json({
-      message: "Lỗi server khi lấy môn học",
+      message: "Server error while fetching subjects.",
       error: err.message,
     });
   }
@@ -14,33 +16,41 @@ export const getSubjects = async (req, res) => {
 
 export const createSubject = async (req, res) => {
   try {
-    const { name } = req.body;
+    const name = normalizeWhitespace(
+      typeof req.body?.name === "string" ? req.body.name : "",
+    );
 
-    if (!name || !name.trim()) {
+    if (!name) {
       return res.status(400).json({
-        message: "Tên subject không được rỗng",
+        message: "Subject name cannot be empty.",
       });
     }
 
-    const existing = await Subject.findOne({ name: name.trim() });
+    const existing = await Subject.findOne({
+      name: buildExactInsensitiveRegex(name),
+    }).lean();
 
     if (existing) {
       return res.status(400).json({
-        message: "Subject đã tồn tại",
+        message: "Subject already exists.",
       });
     }
 
-    const subject = await Subject.create({
-      name: name.trim(),
-    });
+    const subject = await Subject.create({ name });
 
     return res.status(201).json({
-      message: "Tạo subject thành công",
+      message: "Subject created successfully.",
       subject,
     });
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({
+        message: "Subject already exists.",
+      });
+    }
+
     return res.status(500).json({
-      message: "Lỗi server khi tạo subject",
+      message: "Server error while creating subject.",
       error: err.message,
     });
   }

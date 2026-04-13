@@ -1,45 +1,51 @@
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
 
-const UserSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-    lowercase: true,
-  },
-  password: {
-    type: String,
-    required: true,
-  },
-  role: {
-    type: String,
-    enum: ["student", "teacher"],
-    default: "student",
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+export const USER_ROLES = ["student", "teacher", "admin"];
 
-// Hash password trước khi save
-UserSchema.pre("save", async function () {
-  if (!this.isModified("password")) return;
+const UserSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      minlength: 2,
+      maxlength: 80,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+    password: {
+      type: String,
+      required: true,
+      minlength: 6,
+      select: false,
+    },
+    role: {
+      type: String,
+      enum: USER_ROLES,
+      default: "student",
+      index: true,
+    },
+  },
+  {
+    timestamps: true,
+    versionKey: false,
+  },
+);
 
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-});
+UserSchema.index({ role: 1, createdAt: -1 });
 
-// So sánh password khi login
-UserSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+UserSchema.methods.toSafeObject = function () {
+  return {
+    id: this._id.toString(),
+    name: this.name,
+    email: this.email,
+    role: this.role,
+    createdAt: this.createdAt,
+    updatedAt: this.updatedAt,
+  };
 };
 
 const User = mongoose.model("User", UserSchema);

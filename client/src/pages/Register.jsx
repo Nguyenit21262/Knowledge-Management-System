@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useAppContext } from "../context/useAppContext.js";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -10,7 +11,9 @@ const Register = () => {
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { isAuthenticated, isAuthLoading, register, user } = useAppContext();
 
   const handleChange = (field) => (event) => {
     setFormData((current) => ({
@@ -22,14 +25,28 @@ const Register = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    console.log("Registering user:", formData);
-    toast.loading("Creating account...", { duration: 1000 });
+    if (isSubmitting) {
+      return;
+    }
 
-    setTimeout(() => {
-      toast.success("Registration successful! Please log in.");
-      navigate("/login");
-    }, 1000);
+    setIsSubmitting(true);
+
+    try {
+      await register(formData);
+      toast.success("Account created successfully. Please login.");
+      navigate("/login", { replace: true });
+    } catch (error) {
+      toast.error(error.message || "Unable to create account.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  useEffect(() => {
+    if (!isAuthLoading && isAuthenticated) {
+      navigate("/", { replace: true });
+    }
+  }, [isAuthenticated, isAuthLoading, navigate, user?.role]);
 
   return (
     <main className="min-h-screen bg-[#f6f1eb] p-3 sm:p-6">
@@ -103,7 +120,7 @@ const Register = () => {
                   type={showPassword ? "text" : "password"}
                   required
                   value={formData.password}
-                  placeholder="At least 8 characters"
+                  placeholder="At least 6 characters"
                   className="h-12 w-full rounded-xl border border-[#dad6d3] bg-white px-4 pr-12 text-[0.98rem] text-slate-700 outline-none transition focus:border-[#243b72] focus:ring-2 focus:ring-[#243b72]/10"
                   onChange={handleChange("password")}
                 />
@@ -126,9 +143,10 @@ const Register = () => {
 
             <button
               type="submit"
-              className="mt-2 h-12 w-full rounded-xl bg-[#243b72] text-[1.05rem] font-semibold text-white transition hover:bg-[#1d315d] focus:outline-none focus:ring-2 focus:ring-[#243b72]/20"
+              disabled={isSubmitting}
+              className="mt-2 h-12 w-full rounded-xl bg-[#243b72] text-[1.05rem] font-semibold text-white transition hover:bg-[#1d315d] focus:outline-none focus:ring-2 focus:ring-[#243b72]/20 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              Sign Up
+              {isSubmitting ? "Creating Account..." : "Sign Up"}
             </button>
           </form>
 

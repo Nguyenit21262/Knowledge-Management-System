@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useAppContext } from "../context/useAppContext.js";
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { isAuthenticated, isAuthLoading, login, user } = useAppContext();
 
   const handleChange = (field) => (event) => {
     setFormData((current) => ({
@@ -18,18 +21,28 @@ const Login = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    console.log("Login form data:", formData);
+    if (isSubmitting) {
+      return;
+    }
 
-    if (
-      formData.email === "admin@gmail.com" &&
-      formData.password === "123456"
-    ) {
-      toast.success("Mock login successful!");
-      navigate("/");
-    } else {
-      toast.error("Try using admin@gmail.com and 123456!");
+    setIsSubmitting(true);
+
+    try {
+      await login(formData);
+      toast.success("Signed in successfully.");
+      navigate("/", { replace: true });
+    } catch (error) {
+      toast.error(error.message || "Unable to sign in.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    if (!isAuthLoading && isAuthenticated) {
+      navigate("/", { replace: true });
+    }
+  }, [isAuthenticated, isAuthLoading, navigate, user?.role]);
 
   return (
     <main className="min-h-screen bg-[#f6f1eb] p-3 sm:p-6">
@@ -108,9 +121,10 @@ const Login = () => {
 
             <button
               type="submit"
-              className="mt-2 h-12 w-full rounded-xl bg-[#243b72] text-[1.05rem] font-semibold text-white transition hover:bg-[#1d315d] focus:outline-none focus:ring-2 focus:ring-[#243b72]/20"
+              disabled={isSubmitting}
+              className="mt-2 h-12 w-full rounded-xl bg-[#243b72] text-[1.05rem] font-semibold text-white transition hover:bg-[#1d315d] focus:outline-none focus:ring-2 focus:ring-[#243b72]/20 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              Sign In
+              {isSubmitting ? "Signing In..." : "Sign In"}
             </button>
           </form>
 

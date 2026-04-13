@@ -3,12 +3,12 @@ import {
   getSubjects,
   createSubject,
 } from "../controllers/subjectController.js";
-import { protect } from "../middleware/authMiddleware.js";
-import { isTeacher } from "../middleware/roleMiddleware.js";
+import userAuth from "../middleware/userAuth.js";
+import { isAdmin } from "../middleware/adminAuth.js";
 
 const router = express.Router();
 
 router.get("/", getSubjects);
-router.post("/", protect, isTeacher, createSubject);
+router.post("/", userAuth, isAdmin, createSubject);
 
 export default router;

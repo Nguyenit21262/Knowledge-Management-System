@@ -1,8 +1,9 @@
 import Comment from "../models/Comment.js";
 import Material from "../models/Material.js";
+import { normalizeWhitespace } from "../utils/normalizeText.js";
 
 const formatComment = (comment) => ({
-  id: comment._id,
+  id: comment._id.toString(),
   content: comment.content,
   author: comment.author?.name || "Unknown",
   authorRole: comment.author?.role || "student",
@@ -13,12 +14,13 @@ export const getCommentsByMaterial = async (req, res) => {
   try {
     const comments = await Comment.find({ material: req.params.materialId })
       .populate("author", "name role")
-      .sort({ createdAt: 1 });
+      .sort({ createdAt: 1 })
+      .lean();
 
     return res.json(comments.map(formatComment));
   } catch (err) {
     return res.status(500).json({
-      message: "Lỗi server khi lấy comment",
+      message: "Server error while fetching comments.",
       error: err.message,
     });
   }
@@ -26,41 +28,39 @@ export const getCommentsByMaterial = async (req, res) => {
 
 export const createComment = async (req, res) => {
   try {
-    const { content } = req.body;
+    const content = normalizeWhitespace(
+      typeof req.body?.content === "string" ? req.body.content : "",
+    );
 
-    if (!content || !content.trim()) {
+    if (!content) {
       return res.status(400).json({
-        message: "Nội dung comment không được rỗng",
+        message: "Comment content cannot be empty.",
       });
     }
 
-    const material = await Material.findById(req.params.materialId);
+    const material = await Material.findById(req.params.materialId).lean();
 
     if (!material) {
       return res.status(404).json({
-        message: "Không tìm thấy tài liệu",
+        message: "Material not found.",
       });
     }
 
     const comment = await Comment.create({
       material: req.params.materialId,
-      author: req.user.id,
-      content: content.trim(),
-    });
-
-    await Material.findByIdAndUpdate(req.params.materialId, {
-      $inc: { commentsCount: 1 },
+      author: req.user._id,
+      content,
     });
 
     await comment.populate("author", "name role");
 
     return res.status(201).json({
-      message: "Thêm comment thành công",
+      message: "Comment created successfully.",
       comment: formatComment(comment),
     });
   } catch (err) {
     return res.status(500).json({
-      message: "Lỗi server khi thêm comment",
+      message: "Server error while creating comment.",
       error: err.message,
     });
   }
@@ -72,30 +72,27 @@ export const deleteComment = async (req, res) => {
 
     if (!comment) {
       return res.status(404).json({
-        message: "Không tìm thấy comment",
+        message: "Comment not found.",
       });
     }
 
     const isOwner = comment.author.toString() === req.user.id;
-    const isTeacher = req.user.role === "teacher";
+    const canModerate = ["teacher", "admin"].includes(req.user.role);
 
-    if (!isOwner && !isTeacher) {
+    if (!isOwner && !canModerate) {
       return res.status(403).json({
-        message: "Bạn không có quyền xóa comment này",
+        message: "You do not have permission to delete this comment.",
       });
     }
 
     await Comment.findByIdAndDelete(req.params.commentId);
-    await Material.findByIdAndUpdate(comment.material, {
-      $inc: { commentsCount: -1 },
-    });
 
     return res.json({
-      message: "Xóa comment thành công",
+      message: "Comment deleted successfully.",
     });
   } catch (err) {
     return res.status(500).json({
-      message: "Lỗi server khi xóa comment",
+      message: "Server error while deleting comment.",
       error: err.message,
     });
   }

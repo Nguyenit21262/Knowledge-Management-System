@@ -1,19 +1,37 @@
 import React, { useEffect, useState } from "react";
 import { Bell, PanelLeft, Search, Upload } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAppContext } from "../context/useAppContext.js";
 
-const demoUser = {
-  name: "tranvannguyen24012003",
+const guestUser = {
+  name: "Guest User",
+  role: "guest",
 };
 
-const Navbar = ({ user = demoUser, onOpenSidebar }) => {
+const formatRole = (role = "") => {
+  if (!role) {
+    return "Guest";
+  }
+
+  return role.charAt(0).toUpperCase() + role.slice(1);
+};
+
+const Navbar = ({ user = guestUser, onOpenSidebar }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const userInitial = user.name.charAt(0).toUpperCase();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout, isAuthenticated } = useAppContext();
+  const safeUser = user || guestUser;
+  const userInitial = safeUser.name.charAt(0).toUpperCase();
 
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location.pathname]);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <header className="relative z-50 w-full border-b border-slate-200 bg-white">
@@ -41,11 +59,16 @@ const Navbar = ({ user = demoUser, onOpenSidebar }) => {
               <h1 className="truncate text-[1.6rem] font-medium tracking-tight text-slate-950 sm:text-[2rem]">
                 Learning Hub
               </h1>
+              {isAuthenticated && (
+                <p className="truncate text-sm text-slate-500">
+                  {safeUser.name} · {formatRole(safeUser.role)}
+                </p>
+              )}
             </div>
           </Link>
         </div>
 
-        <div className="order-3 w-full md:order-none md:max-w-[440px] md:flex-1 md:min-w-[280px]">
+        <div className="order-3 w-full md:order-none md:max-w-[440px] md:min-w-[280px] md:flex-1">
           <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-[var(--theme-blue)] sm:px-5">
             <Search className="h-5 w-5 shrink-0" strokeWidth={1.8} />
             <input
@@ -84,7 +107,16 @@ const Navbar = ({ user = demoUser, onOpenSidebar }) => {
             </button>
 
             {isMenuOpen && (
-              <div className="absolute right-0 top-[calc(100%+10px)] z-50 w-[180px] rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
+              <div className="absolute right-0 top-[calc(100%+10px)] z-50 w-[200px] rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
+                <div className="border-b border-slate-100 px-4 py-3">
+                  <p className="truncate text-sm font-semibold text-slate-900">
+                    {safeUser.name}
+                  </p>
+                  <p className="truncate text-xs text-slate-500">
+                    {safeUser.email || formatRole(safeUser.role)}
+                  </p>
+                </div>
+
                 <Link
                   to="/profile"
                   onClick={() => setIsMenuOpen(false)}
@@ -93,13 +125,13 @@ const Navbar = ({ user = demoUser, onOpenSidebar }) => {
                   Profile
                 </Link>
 
-                <Link
-                  to="/profile"
-                  onClick={() => setIsMenuOpen(false)}
+                <button
+                  type="button"
+                  onClick={handleLogout}
                   className="block w-full rounded-xl px-4 py-3 text-left text-[1rem] font-normal text-slate-700"
                 >
                   Logout
-                </Link>
+                </button>
               </div>
             )}
           </div>

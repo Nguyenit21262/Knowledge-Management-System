@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { useAppContext } from "../../context/useAppContext";
 
 const adminSections = [
   {
@@ -55,6 +56,10 @@ const adminSections = [
 ];
 
 const AdminSidebar = ({ isOpen, onClose }) => {
+  const { user } = useAppContext();
+  const safeUser = user || { name: "Admin", email: "admin@school.edu" };
+  const userInitial = safeUser.name.charAt(0).toUpperCase();
+
   return (
     <aside
       id="admin-sidebar"
@@ -131,15 +136,15 @@ const AdminSidebar = ({ isOpen, onClose }) => {
 
       <div className="flex items-center gap-4 border-t border-white/10 pt-6">
         <div className="flex h-11 w-11 items-center justify-center rounded-md bg-[#37508b] text-[1.05rem] font-medium text-white sm:h-12 sm:w-12 sm:text-[1.15rem]">
-          A
+          {userInitial}
         </div>
 
-        <div>
-          <p className="text-[1rem] font-medium text-white sm:text-[1.05rem]">
-            Admin User
+        <div className="min-w-0">
+          <p className="truncate text-[1rem] font-medium text-white sm:text-[1.05rem]">
+            {safeUser.name}
           </p>
-          <p className="break-all text-[0.88rem] font-normal text-slate-300 sm:text-[0.95rem]">
-            admin@school.edu
+          <p className="truncate text-[0.88rem] font-normal text-slate-300 sm:text-[0.95rem]">
+            {safeUser.email}
           </p>
         </div>
       </div>

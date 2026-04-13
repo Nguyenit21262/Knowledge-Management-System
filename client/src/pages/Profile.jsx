@@ -11,19 +11,46 @@ import {
   UserRound,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAppContext } from "../context/useAppContext.js";
 
-const profile = {
-  name: "tranvannguyen24012003",
-  email: "tranvannguyen24012003@gmail.com",
-  role: "Student",
+const profileStats = {
   bio: "No bio added yet.",
-  memberSince: "September 20, 2025",
   downloads: 34,
   comments: 23,
   bookmarked: 18,
 };
 
+const formatMemberSince = (dateValue) => {
+  if (!dateValue) {
+    return "Unknown";
+  }
+
+  return new Date(dateValue).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+const formatRole = (role = "") => {
+  if (!role) {
+    return "Student";
+  }
+
+  return role.charAt(0).toUpperCase() + role.slice(1);
+};
+
 const Profile = () => {
+  const { user } = useAppContext();
+
+  const profile = {
+    name: user?.name || "Guest User",
+    email: user?.email || "No email available",
+    role: formatRole(user?.role),
+    memberSince: formatMemberSince(user?.createdAt),
+    ...profileStats,
+  };
+
   return (
     <main className="min-h-[calc(100vh-97px)] bg-[#f6f9ff] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 xl:px-10">
       <div className="mx-auto max-w-[1440px] space-y-8">
