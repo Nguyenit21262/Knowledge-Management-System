@@ -6,10 +6,10 @@ const KnowledgeBaseCard = ({ document }) => {
   return (
     <Link
       to={`/documents/${document.id}`}
-      className="block rounded-md border border-slate-200 bg-white px-5 py-5 shadow-[0_6px_20px_rgba(15,23,42,0.04)] sm:px-6 sm:py-6 lg:px-8 lg:py-8"
+      className="block border border-slate-200  px-5 py-5  sm:px-6 sm:py-6 lg:px-8 lg:py-8"
     >
       <div className="mb-5 sm:mb-6">
-        <span className="inline-flex rounded-md bg-[#fbf1dd] px-3 py-1.5 text-[0.92rem] font-normal text-slate-900 sm:px-4 sm:py-2 sm:text-[1rem]">
+        <span className="inline-flex rounded-md  px-3 py-1.5 text-[0.92rem] font-normal text-slate-900 sm:px-4 sm:py-2 sm:text-[1rem]">
           {document.subject}
         </span>
       </div>

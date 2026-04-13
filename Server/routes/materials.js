@@ -2,6 +2,9 @@ import express from "express";
 import upload from "../config/upload.js";
 import {
   getMaterials,
+  searchMaterials,
+  searchMaterialSuggestions,
+  getLetterCounts,
   getMaterialById,
   createMaterial,
   updateMaterial,
@@ -13,6 +16,9 @@ import userAuth from "../middleware/userAuth.js";
 
 const router = express.Router();
 
+router.get("/search/suggestions", searchMaterialSuggestions);
+router.get("/search/letter-counts", getLetterCounts);
+router.get("/search", searchMaterials);
 router.get("/", getMaterials);
 router.get("/:id", getMaterialById);
 router.post("/", userAuth, upload.single("file"), createMaterial);

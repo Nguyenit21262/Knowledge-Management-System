@@ -1,22 +1,24 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/useAppContext.js";
+import { getDefaultRouteByRole } from "../utils/routeAccess.js";
 
 /**
- * Redirects authenticated users away from auth pages (login/register).
- * Extracted from Login.jsx and Register.jsx to avoid duplication.
+ * Redirect authenticated users away from login/register pages.
  *
- * @param {string} [redirectTo="/"] – Where to redirect if already authenticated.
+ * @param {string} [redirectTo] Optional override for the post-auth redirect path.
  */
-const useAuthRedirect = (redirectTo = "/") => {
-  const { isAuthenticated, isAuthLoading } = useAppContext();
+const useAuthRedirect = (redirectTo) => {
+  const { isAuthenticated, isAuthLoading, user } = useAppContext();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!isAuthLoading && isAuthenticated) {
-      navigate(redirectTo, { replace: true });
+      navigate(redirectTo || getDefaultRouteByRole(user?.role), {
+        replace: true,
+      });
     }
-  }, [isAuthenticated, isAuthLoading, navigate, redirectTo]);
+  }, [isAuthenticated, isAuthLoading, navigate, redirectTo, user?.role]);
 };
 
 export default useAuthRedirect;

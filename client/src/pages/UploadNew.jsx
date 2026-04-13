@@ -82,7 +82,7 @@ const UploadNew = () => {
       <div className="mx-auto max-w-[1200px] rounded-[28px] border border-slate-200 bg-white px-10 py-12 shadow-[0_6px_20px_rgba(15,23,42,0.04)]">
         <div className="mb-12">
           <div className="mb-3 flex items-center gap-3 text-slate-950">
-            <Upload className="h-7 w-7 text-[#f59e0b]" strokeWidth={1.8} />
+            <Upload className="h-7 w-7 text-[#3b82f6]" strokeWidth={1.8} />
             <h1 className="text-[3rem] font-medium tracking-tight">
               Upload Document
             </h1>

@@ -10,12 +10,13 @@ const Register = () => {
     name: "",
     email: "",
     password: "",
+    role: "student",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { register } = useAppContext();
-  useAuthRedirect("/");
+  useAuthRedirect();
 
   const handleChange = (field) => (event) => {
     setFormData((current) => ({
@@ -47,8 +48,8 @@ const Register = () => {
 
 
   return (
-    <main className="min-h-screen bg-[#f6f1eb] p-3 sm:p-6">
-      <section className="flex min-h-[calc(100vh-24px)] items-center justify-center rounded-[28px] border border-[#e6ddd1] bg-[#faf6f1] px-5 py-10 shadow-[0_12px_40px_rgba(84,69,47,0.05)] sm:min-h-[calc(100vh-48px)] sm:px-8">
+    <main className="min-h-screen bg-[#f6f9ff] p-3 sm:p-6">
+      <section className="flex min-h-[calc(100vh-24px)] items-center justify-center rounded-[28px] border border-[#e2e8f0] bg-[#ffffff] px-5 py-10 shadow-[0_12px_40px_rgba(84,69,47,0.05)] sm:min-h-[calc(100vh-48px)] sm:px-8">
         <div className="w-full max-w-[386px]">
           <div className="mb-10 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl">
@@ -59,10 +60,10 @@ const Register = () => {
               />
             </div>
 
-            <h1 className="mt-5 font-serif text-[2rem] font-semibold tracking-tight text-[#0f2245]">
+            <h1 className="mt-5 font-serif text-[2rem] font-semibold tracking-tight text-[#0f172a]">
               Create Your Account
             </h1>
-            <p className="mt-2 text-[1rem] text-[#7e6f63]">
+            <p className="mt-2 text-[1rem] text-[#64748b]">
               Sign up to start learning
             </p>
           </div>
@@ -81,7 +82,7 @@ const Register = () => {
                 required
                 value={formData.name}
                 placeholder="Nguyen Van A"
-                className="h-12 w-full rounded-xl border border-[#dad6d3] bg-white px-4 text-[0.98rem] text-slate-700 outline-none transition focus:border-[#243b72] focus:ring-2 focus:ring-[#243b72]/10"
+                className="h-12 w-full rounded-xl border border-[#dad6d3] bg-white px-4 text-[0.98rem] text-slate-700 outline-none transition focus:border-[#3b82f6] focus:ring-2 focus:ring-[#3b82f6]/10"
                 onChange={handleChange("name")}
               />
             </div>
@@ -99,9 +100,27 @@ const Register = () => {
                 required
                 value={formData.email}
                 placeholder="email@school.edu"
-                className="h-12 w-full rounded-xl border border-[#dad6d3] bg-white px-4 text-[0.98rem] text-slate-700 outline-none transition focus:border-[#243b72] focus:ring-2 focus:ring-[#243b72]/10"
+                className="h-12 w-full rounded-xl border border-[#dad6d3] bg-white px-4 text-[0.98rem] text-slate-700 outline-none transition focus:border-[#3b82f6] focus:ring-2 focus:ring-[#3b82f6]/10"
                 onChange={handleChange("email")}
               />
+            </div>
+
+            <div>
+              <label
+                htmlFor="register-role"
+                className="mb-2 block text-[1rem] font-semibold text-[#1f1f1f]"
+              >
+                Role
+              </label>
+              <select
+                id="register-role"
+                value={formData.role}
+                className="h-12 w-full rounded-xl border border-[#dad6d3] bg-white px-4 text-[0.98rem] text-slate-700 outline-none transition focus:border-[#3b82f6] focus:ring-2 focus:ring-[#3b82f6]/10"
+                onChange={handleChange("role")}
+              >
+                <option value="student">Student</option>
+                <option value="teacher">Teacher</option>
+              </select>
             </div>
 
             <div>
@@ -119,13 +138,13 @@ const Register = () => {
                   required
                   value={formData.password}
                   placeholder="At least 6 characters"
-                  className="h-12 w-full rounded-xl border border-[#dad6d3] bg-white px-4 pr-12 text-[0.98rem] text-slate-700 outline-none transition focus:border-[#243b72] focus:ring-2 focus:ring-[#243b72]/10"
+                  className="h-12 w-full rounded-xl border border-[#dad6d3] bg-white px-4 pr-12 text-[0.98rem] text-slate-700 outline-none transition focus:border-[#3b82f6] focus:ring-2 focus:ring-[#3b82f6]/10"
                   onChange={handleChange("password")}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((current) => !current)}
-                  className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-slate-400 transition hover:text-[#243b72]"
+                  className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-slate-400 transition hover:text-[#3b82f6]"
                   aria-label={
                     showPassword ? "Hide password" : "Show password"
                   }
@@ -142,20 +161,23 @@ const Register = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="mt-2 h-12 w-full rounded-xl bg-[#243b72] text-[1.05rem] font-semibold text-white transition hover:bg-[#1d315d] focus:outline-none focus:ring-2 focus:ring-[#243b72]/20 disabled:cursor-not-allowed disabled:opacity-70"
+              className="mt-2 h-12 w-full rounded-xl bg-[#3b82f6] text-[1.05rem] font-semibold text-white transition hover:bg-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#3b82f6]/20 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isSubmitting ? "Creating Account..." : "Sign Up"}
             </button>
           </form>
 
-          <p className="mt-8 text-center text-[1rem] text-[#7e6f63]">
+          <p className="mt-8 text-center text-[1rem] text-[#64748b]">
             Already have an account?{" "}
             <Link
               to="/login"
-              className="font-semibold text-[#243b72] transition hover:opacity-80"
+              className="font-semibold text-[#3b82f6] transition hover:opacity-80"
             >
               Sign in
             </Link>
+          </p>
+          <p className="mt-3 text-center text-[0.92rem] text-[#94a3b8]">
+            This project uses only Student and Teacher roles.
           </p>
         </div>
       </section>

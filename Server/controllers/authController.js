@@ -106,6 +106,13 @@ export const login = async (req, res) => {
       });
     }
 
+    if (!user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: "This account has been deactivated. Please contact a teacher.",
+      });
+    }
+
     const isMatch = await comparePassword(password, user.password);
 
     if (!isMatch) {

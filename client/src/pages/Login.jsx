@@ -1,17 +1,22 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAppContext } from "../context/useAppContext.js";
 import useAuthRedirect from "../hooks/useAuthRedirect.js";
+import {
+  getDefaultRouteByRole,
+  hasAllowedRole,
+} from "../utils/routeAccess.js";
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAppContext();
-  useAuthRedirect("/");
+  useAuthRedirect();
 
   const handleChange = (field) => (event) => {
     setFormData((current) => ({
@@ -30,9 +35,20 @@ const Login = () => {
     setIsSubmitting(true);
 
     try {
-      await login(formData);
+      const loggedInUser = await login(formData);
       toast.success("Signed in successfully.");
-      navigate("/", { replace: true });
+      const redirectPath = location.state?.from?.pathname;
+      const canAccessRedirectPath =
+        redirectPath &&
+        (!redirectPath.startsWith("/admin") ||
+          hasAllowedRole(loggedInUser?.role, ["teacher"]));
+
+      navigate(
+        canAccessRedirectPath
+          ? redirectPath
+          : getDefaultRouteByRole(loggedInUser?.role),
+        { replace: true },
+      );
     } catch (error) {
       toast.error(error.message || "Unable to sign in.");
     } finally {
@@ -43,8 +59,8 @@ const Login = () => {
 
 
   return (
-    <main className="min-h-screen bg-[#f6f1eb] p-3 sm:p-6">
-      <section className="flex min-h-[calc(100vh-24px)] items-center justify-center rounded-[28px] border border-[#e6ddd1] bg-[#faf6f1] px-5 py-10 shadow-[0_12px_40px_rgba(84,69,47,0.05)] sm:min-h-[calc(100vh-48px)] sm:px-8">
+    <main className="min-h-screen bg-[#f6f9ff] p-3 sm:p-6">
+      <section className="flex min-h-[calc(100vh-24px)] items-center justify-center rounded-[28px] border border-[#e2e8f0] bg-[#ffffff] px-5 py-10 shadow-[0_12px_40px_rgba(84,69,47,0.05)] sm:min-h-[calc(100vh-48px)] sm:px-8">
         <div className="w-full max-w-[386px]">
           <div className="mb-10 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl">
@@ -55,10 +71,10 @@ const Login = () => {
               />
             </div>
 
-            <h1 className="mt-5 font-serif text-[2rem] font-semibold tracking-tight text-[#0f2245]">
-              Sign In to EduVault
+            <h1 className="mt-5 font-serif text-[2rem] font-semibold tracking-tight text-[#0f172a]">
+              Sign In to Learning Hub
             </h1>
-            <p className="mt-2 text-[1rem] text-[#7e6f63]">
+            <p className="mt-2 text-[1rem] text-[#64748b]">
               Welcome back to your learning space
             </p>
           </div>
@@ -77,7 +93,7 @@ const Login = () => {
                 required
                 value={formData.email}
                 placeholder="email@school.edu"
-                className="h-12 w-full rounded-xl border border-[#dad6d3] bg-white px-4 text-[0.98rem] text-slate-700 outline-none transition focus:border-[#243b72] focus:ring-2 focus:ring-[#243b72]/10"
+                className="h-12 w-full rounded-xl border border-[#dad6d3] bg-white px-4 text-[0.98rem] text-slate-700 outline-none transition focus:border-[#3b82f6] focus:ring-2 focus:ring-[#3b82f6]/10"
                 onChange={handleChange("email")}
               />
             </div>
@@ -97,13 +113,13 @@ const Login = () => {
                   required
                   value={formData.password}
                   placeholder="Enter your password"
-                  className="h-12 w-full rounded-xl border border-[#dad6d3] bg-white px-4 pr-12 text-[0.98rem] text-slate-700 outline-none transition focus:border-[#243b72] focus:ring-2 focus:ring-[#243b72]/10"
+                  className="h-12 w-full rounded-xl border border-[#dad6d3] bg-white px-4 pr-12 text-[0.98rem] text-slate-700 outline-none transition focus:border-[#3b82f6] focus:ring-2 focus:ring-[#3b82f6]/10"
                   onChange={handleChange("password")}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((current) => !current)}
-                  className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-slate-400 transition hover:text-[#243b72]"
+                  className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-slate-400 transition hover:text-[#3b82f6]"
                   aria-label={
                     showPassword ? "Hide password" : "Show password"
                   }
@@ -120,17 +136,17 @@ const Login = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="mt-2 h-12 w-full rounded-xl bg-[#243b72] text-[1.05rem] font-semibold text-white transition hover:bg-[#1d315d] focus:outline-none focus:ring-2 focus:ring-[#243b72]/20 disabled:cursor-not-allowed disabled:opacity-70"
+              className="mt-2 h-12 w-full rounded-xl bg-[#3b82f6] text-[1.05rem] font-semibold text-white transition hover:bg-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#3b82f6]/20 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isSubmitting ? "Signing In..." : "Sign In"}
             </button>
           </form>
 
-          <p className="mt-8 text-center text-[1rem] text-[#7e6f63]">
+          <p className="mt-8 text-center text-[1rem] text-[#64748b]">
             Do not have an account?{" "}
             <Link
               to="/register"
-              className="font-semibold text-[#243b72] transition hover:opacity-80"
+              className="font-semibold text-[#3b82f6] transition hover:opacity-80"
             >
               Sign up
             </Link>

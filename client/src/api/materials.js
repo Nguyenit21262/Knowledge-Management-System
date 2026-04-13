@@ -40,6 +40,42 @@ export const getAllMaterials = async () => {
   }
 };
 
+export const getMaterialSuggestions = async (query) => {
+  try {
+    const response = await httpClient.get("/api/materials/search/suggestions", {
+      params: { q: query },
+    });
+    return response.data?.suggestions || [];
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Unable to fetch suggestions."));
+  }
+};
+
+export const searchMaterials = async (query, { letter, sortBy, sortOrder, subject } = {}) => {
+  try {
+    const params = {};
+    if (query) params.q = query;
+    if (letter) params.letter = letter;
+    if (sortBy) params.sortBy = sortBy;
+    if (sortOrder) params.sortOrder = sortOrder;
+    if (subject) params.subject = subject;
+
+    const response = await httpClient.get("/api/materials/search", { params });
+    return response.data?.materials || [];
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Unable to search documents."));
+  }
+};
+
+export const getLetterCounts = async () => {
+  try {
+    const response = await httpClient.get("/api/materials/search/letter-counts");
+    return response.data?.counts || {};
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Unable to fetch letter counts."));
+  }
+};
+
 export const getMaterialById = async (id) => {
   try {
     const response = await httpClient.get(`/api/materials/${id}`);

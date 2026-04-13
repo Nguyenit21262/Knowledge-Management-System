@@ -4,12 +4,14 @@ import {
   ChevronLeft,
   FileText,
   Home,
+  LayoutDashboard,
   PanelLeft,
   Search,
   X,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { getUserMaterials } from "../api/materials.js";
+import { normalizeRole } from "../utils/routeAccess.js";
 import { formatRole } from "../utils/formatters.js";
 
 const sidebarUser = {
@@ -35,6 +37,7 @@ const Sidebar = ({ user = sidebarUser, isMobileOpen, onClose }) => {
   const isExpanded = !isCollapsed;
   const safeUser = user || sidebarUser;
   const userInitial = safeUser.name.charAt(0).toUpperCase();
+  const isTeacher = normalizeRole(safeUser.role) === "teacher";
 
   const userId = safeUser?._id || safeUser?.id;
 
@@ -168,6 +171,24 @@ const Sidebar = ({ user = sidebarUser, isMobileOpen, onClose }) => {
           );
         })}
       </nav>
+
+      {isTeacher && (
+        <div className="mt-10 border-t border-slate-200 pt-6">
+          <Link
+            to="/admin"
+            onClick={onClose}
+            title={!isExpanded ? "Dashboard" : undefined}
+            className={`flex items-center rounded-lg py-3 text-[1.02rem] font-normal ${
+              location.pathname.startsWith("/admin")
+                ? "bg-blue-400 text-white"
+                : "bg-slate-50 text-slate-700"
+            } ${isExpanded ? "justify-start gap-3 px-4" : "justify-center px-0"}`}
+          >
+            <LayoutDashboard className="h-5 w-5" strokeWidth={1.8} />
+            {isExpanded && "Dashboard"}
+          </Link>
+        </div>
+      )}
     </aside>
   );
 };

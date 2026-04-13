@@ -4,8 +4,8 @@ import { Link } from "react-router-dom";
 
 const CategoryCard = ({ category }) => {
   const Icon = category.icon || BookOpen;
-  const iconBg = category.iconBackground || "bg-amber-100";
-  const iconColor = category.iconColor || "text-amber-700";
+  const iconBg = category.iconBackground || "bg-blue-100";
+  const iconColor = category.iconColor || "text-blue-700";
 
   return (
     <Link

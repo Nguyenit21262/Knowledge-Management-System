@@ -25,6 +25,19 @@ const userAuth = async (req, res, next) => {
         });
       }
 
+      if (!user.isActive) {
+        res.clearCookie("token", {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        });
+
+        return res.status(403).json({
+          success: false,
+          message: "This account has been deactivated.",
+        });
+      }
+
       req.userId = tokenDecode.id;
       req.user = user;
       next();

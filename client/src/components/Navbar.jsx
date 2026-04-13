@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Bell, PanelLeft, Search, Upload } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import UserNotificationsBell from "./UserNotificationsBell.jsx";
 import { useAppContext } from "../context/useAppContext.js";
+import useMaterialSuggestions from "../hooks/useMaterialSuggestions.js";
 import { formatRole } from "../utils/formatters.js";
 
 const guestUser = {
@@ -13,19 +15,68 @@ const guestUser = {
 
 const Navbar = ({ user = guestUser, onOpenSidebar }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, isAuthenticated } = useAppContext();
+  const searchRef = useRef(null);
+  const suggestions = useMaterialSuggestions(searchText);
   const safeUser = user || guestUser;
   const userInitial = safeUser.name.charAt(0).toUpperCase();
 
   useEffect(() => {
     setIsMenuOpen(false);
-  }, [location.pathname]);
+    if (location.pathname === "/search") {
+      const params = new URLSearchParams(location.search);
+      setSearchText(params.get("q") || "");
+      return;
+    }
+
+    setSearchText("");
+    setIsSuggestionsOpen(false);
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    setIsSuggestionsOpen(suggestions.length > 0);
+  }, [suggestions]);
+
+  useEffect(() => {
+    const handlePointerDown = (event) => {
+      if (!searchRef.current?.contains(event.target)) {
+        setIsSuggestionsOpen(false);
+      }
+    };
+
+    window.addEventListener("mousedown", handlePointerDown);
+
+    return () => {
+      window.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, []);
 
   const handleLogout = async () => {
     await logout();
     navigate("/login", { replace: true });
+  };
+
+  const navigateToSearch = (query) => {
+    const trimmedQuery = query.trim();
+    const nextParams = new URLSearchParams();
+
+    if (trimmedQuery) {
+      nextParams.set("q", trimmedQuery);
+      navigate(`/search?${nextParams.toString()}`);
+    } else {
+      navigate("/search");
+    }
+
+    setIsSuggestionsOpen(false);
+  };
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    navigateToSearch(searchText);
   };
 
   return (
@@ -63,16 +114,51 @@ const Navbar = ({ user = guestUser, onOpenSidebar }) => {
           </Link>
         </div>
 
-        <div className="order-3 w-full md:order-none md:max-w-[440px] md:min-w-[280px] md:flex-1">
-          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-[var(--theme-blue)] sm:px-5">
-            <Search className="h-5 w-5 shrink-0" strokeWidth={1.8} />
-            <input
-              type="text"
-              placeholder="Search documents..."
-              className="w-full bg-transparent text-[1rem] outline-none placeholder:text-slate-400"
-            />
+        <form
+          onSubmit={handleSearchSubmit}
+          ref={searchRef}
+          className="order-3 w-full md:order-none md:max-w-[440px] md:min-w-[280px] md:flex-1"
+        >
+          <div className="relative">
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-[var(--theme-blue)] sm:px-5">
+              <Search className="h-5 w-5 shrink-0" strokeWidth={1.8} />
+              <input
+                type="text"
+                value={searchText}
+                onChange={(event) => setSearchText(event.target.value)}
+                onFocus={() => {
+                  if (suggestions.length > 0) {
+                    setIsSuggestionsOpen(true);
+                  }
+                }}
+                placeholder="Search by subject, title, or author..."
+                className="w-full bg-transparent text-[1rem] outline-none placeholder:text-slate-400"
+              />
+            </div>
+
+            {isSuggestionsOpen && (
+              <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.12)]">
+                {suggestions.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => {
+                      setSearchText(suggestion);
+                      navigateToSearch(suggestion);
+                    }}
+                    className="flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left text-[0.96rem] text-slate-700 transition hover:bg-slate-50 last:border-b-0"
+                  >
+                    <Search
+                      className="h-4 w-4 shrink-0 text-slate-400"
+                      strokeWidth={1.8}
+                    />
+                    <span className="truncate">{suggestion}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
+        </form>
 
         <div className="ml-auto flex items-center gap-2 sm:gap-4">
           <Link
@@ -83,12 +169,16 @@ const Navbar = ({ user = guestUser, onOpenSidebar }) => {
             <span className="hidden sm:inline">Upload</span>
           </Link>
 
-          <button
-            type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-[var(--theme-blue)] sm:h-12 sm:w-12"
-          >
-            <Bell className="h-5 w-5" strokeWidth={1.8} />
-          </button>
+          {isAuthenticated ? (
+            <UserNotificationsBell />
+          ) : (
+            <button
+              type="button"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-[var(--theme-blue)] sm:h-12 sm:w-12"
+            >
+              <Bell className="h-5 w-5" strokeWidth={1.8} />
+            </button>
+          )}
 
           <div className="relative">
             <button

@@ -26,5 +26,6 @@ export const formatDate = (dateString) => {
  */
 export const formatRole = (role = "", fallback = "Student") => {
   if (!role) return fallback;
-  return role.charAt(0).toUpperCase() + role.slice(1);
+  const normalizedRole = role === "admin" ? "teacher" : role;
+  return normalizedRole.charAt(0).toUpperCase() + normalizedRole.slice(1);
 };

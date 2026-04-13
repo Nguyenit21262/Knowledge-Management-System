@@ -1,17 +1,25 @@
-import User from "../models/User.js";
+import User, { normalizeUserRole } from "../models/User.js";
 import Comment from "../models/Comment.js";
 import Material from "../models/Material.js";
 
 export const getUsers = async (req, res) => {
   try {
-    const users = await User.find().sort({ createdAt: -1 }).lean();
+    const requestedRole = req.query?.role;
+    const filter = {};
+
+    if (requestedRole) {
+      filter.role = normalizeUserRole(requestedRole);
+    }
+
+    const users = await User.find(filter).sort({ createdAt: -1 }).lean();
 
     return res.json(
       users.map((user) => ({
         id: user._id.toString(),
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: normalizeUserRole(user.role),
+        isActive: user.isActive !== false,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       })),
@@ -19,6 +27,52 @@ export const getUsers = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       message: "Server error while fetching users.",
+      error: err.message,
+    });
+  }
+};
+
+export const updateStudentStatus = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const isActive = req.body?.isActive;
+
+    if (typeof isActive !== "boolean") {
+      return res.status(400).json({
+        message: "isActive must be a boolean value.",
+      });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    if (normalizeUserRole(user.role) !== "student") {
+      return res.status(400).json({
+        message: "Only student accounts can be managed here.",
+      });
+    }
+
+    user.isActive = isActive;
+    await user.save();
+
+    return res.json({
+      message: isActive ? "Student account activated." : "Student account deactivated.",
+      user: {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        role: normalizeUserRole(user.role),
+        isActive: user.isActive,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Server error while updating student status.",
       error: err.message,
     });
   }

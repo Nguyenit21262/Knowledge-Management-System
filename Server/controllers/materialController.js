@@ -15,13 +15,15 @@ import {
   buildContainsInsensitiveRegex,
   buildExactInsensitiveRegex,
 } from "../utils/regexUtils.js";
+import { normalizeUserRole } from "../models/User.js";
 
-const buildMaterialFilter = ({ search, subject, type, category, uploadedBy }) => {
+const buildMaterialFilter = ({ search, subject, type, category, uploadedBy, letter }) => {
   const filter = {};
   const normalizedSearch = normalizeWhitespace(search);
   const normalizedSubject = normalizeWhitespace(subject);
   const normalizedCategory = normalizeWhitespace(category);
   const normalizedType = normalizeWhitespace(type);
+  const normalizedLetter = typeof letter === "string" ? letter.trim().toUpperCase() : "";
 
   if (uploadedBy) {
     filter.uploadedBy = uploadedBy;
@@ -51,7 +53,22 @@ const buildMaterialFilter = ({ search, subject, type, category, uploadedBy }) =>
     filter.type = normalizedType.toUpperCase();
   }
 
+  // Filter by first letter of title (case-insensitive)
+  if (normalizedLetter && /^[A-Z]$/.test(normalizedLetter)) {
+    filter.title = {
+      ...(filter.title || {}),
+      $regex: new RegExp(`^${normalizedLetter}`, "i"),
+    };
+  }
+
   return filter;
+};
+
+const buildSortOption = ({ sortBy, sortOrder }) => {
+  const validSortFields = ["title", "createdAt", "views", "downloads"];
+  const field = validSortFields.includes(sortBy) ? sortBy : "createdAt";
+  const order = sortOrder === "asc" ? 1 : -1;
+  return { [field]: order };
 };
 
 const normalizeMaterialPayload = (body = {}) => ({
@@ -66,6 +83,38 @@ const normalizeMaterialPayload = (body = {}) => ({
     typeof body.category === "string" ? body.category : "",
   ),
 });
+
+const buildSuggestionsFromMaterials = (materials, query) => {
+  const normalizedQuery = normalizeWhitespace(query).toLowerCase();
+  const uniqueSuggestions = new Set();
+
+  for (const material of materials) {
+    const candidateValues = [material.subject, material.title];
+
+    for (const value of candidateValues) {
+      if (!value) {
+        continue;
+      }
+
+      const nextSuggestion = String(value).trim();
+
+      if (
+        !nextSuggestion ||
+        !nextSuggestion.toLowerCase().includes(normalizedQuery)
+      ) {
+        continue;
+      }
+
+      uniqueSuggestions.add(nextSuggestion);
+
+      if (uniqueSuggestions.size >= 10) {
+        return Array.from(uniqueSuggestions);
+      }
+    }
+  }
+
+  return Array.from(uniqueSuggestions);
+};
 
 const resolveMaterialTaxonomy = async ({ subject, category }) => {
   let [subjectDoc, categoryDoc] = await Promise.all([
@@ -115,17 +164,160 @@ const getValidatedTaxonomy = async (body) => {
   };
 };
 
+const getCurrentUserId = (req) =>
+  req.user?._id?.toString?.() || req.user?.id?.toString?.() || req.userId?.toString?.() || "";
+
+const canManageMaterial = (req, material) => {
+  const currentUserId = getCurrentUserId(req);
+  const uploadedById = material?.uploadedBy?.toString?.() || "";
+  const currentUserRole = normalizeUserRole(req.user?.role);
+
+  return currentUserRole === "teacher" || currentUserId === uploadedById;
+};
+
 export const getMaterials = async (req, res) => {
   try {
+    const sortOption = buildSortOption({
+      sortBy: req.query.sortBy,
+      sortOrder: req.query.sortOrder,
+    });
+
     const materials = await Material.find(buildMaterialFilter(req.query))
       .populate("uploadedBy", "name role")
-      .sort({ createdAt: -1 })
+      .sort(sortOption)
       .lean();
 
     return res.json(materials.map((material) => formatMaterial(material)));
   } catch (err) {
     return res.status(500).json({
       message: "Server error while fetching materials.",
+      error: err.message,
+    });
+  }
+};
+
+export const searchMaterials = async (req, res) => {
+  try {
+    const query = normalizeWhitespace(req.query?.q || "");
+    const letter = typeof req.query?.letter === "string" ? req.query.letter.trim().toUpperCase() : "";
+    const sortBy = req.query?.sortBy || "createdAt";
+    const sortOrder = req.query?.sortOrder || "desc";
+    const subject = normalizeWhitespace(req.query?.subject || "");
+
+    // Build a combined filter for search + letter + subject
+    const filter = {};
+
+    if (query) {
+      const searchRegex = buildContainsInsensitiveRegex(query);
+      filter.$or = [
+        { title: searchRegex },
+        { description: searchRegex },
+        { subject: searchRegex },
+        { category: searchRegex },
+        { contentText: searchRegex },
+      ];
+    }
+
+    if (letter && /^[A-Z]$/.test(letter)) {
+      filter.title = { $regex: new RegExp(`^${letter}`, "i") };
+    }
+
+    if (subject) {
+      filter.subject = buildExactInsensitiveRegex(subject);
+    }
+
+    const sortOption = buildSortOption({ sortBy, sortOrder });
+
+    const materials = await Material.find(filter)
+      .populate("uploadedBy", "name role")
+      .sort(sortOption)
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      total: materials.length,
+      materials: materials.map((material) => formatMaterial(material)),
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to search materials.",
+      error: err.message,
+    });
+  }
+};
+
+export const getLetterCounts = async (req, res) => {
+  try {
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+    // Use MongoDB aggregation to count documents per first letter
+    const pipeline = [
+      {
+        $project: {
+          firstLetter: { $toUpper: { $substrCP: ["$title", 0, 1] } },
+        },
+      },
+      {
+        $group: {
+          _id: "$firstLetter",
+          count: { $sum: 1 },
+        },
+      },
+    ];
+
+    const results = await Material.aggregate(pipeline);
+
+    // Build a counts object with all 26 letters
+    const counts = {};
+    alphabet.forEach((l) => (counts[l] = 0));
+    results.forEach((r) => {
+      if (counts[r._id] !== undefined) {
+        counts[r._id] = r.count;
+      }
+    });
+
+    return res.json({
+      success: true,
+      counts,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch letter counts.",
+      error: err.message,
+    });
+  }
+};
+
+export const searchMaterialSuggestions = async (req, res) => {
+  try {
+    const query = normalizeWhitespace(req.query?.q || "");
+
+    if (!query) {
+      return res.json({ suggestions: [] });
+    }
+
+    const searchRegex = buildContainsInsensitiveRegex(query);
+    const materials = await Material.find({
+      $or: [
+        { subject: searchRegex },
+        { title: searchRegex },
+        { category: searchRegex },
+      ],
+    })
+      .select("subject title category")
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean();
+
+    const suggestions = buildSuggestionsFromMaterials(materials, query);
+
+    return res.json({ suggestions });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch suggestions.",
       error: err.message,
     });
   }
@@ -214,6 +406,12 @@ export const updateMaterial = async (req, res) => {
     if (!material) {
       return res.status(404).json({
         message: "Material not found.",
+      });
+    }
+
+    if (!canManageMaterial(req, material)) {
+      return res.status(403).json({
+        message: "You do not have permission to update this material.",
       });
     }
 
@@ -346,6 +544,12 @@ export const deleteMaterial = async (req, res) => {
     if (!material) {
       return res.status(404).json({
         message: "Material not found.",
+      });
+    }
+
+    if (!canManageMaterial(req, material)) {
+      return res.status(403).json({
+        message: "You do not have permission to delete this material.",
       });
     }
 

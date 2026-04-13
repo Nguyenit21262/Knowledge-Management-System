@@ -1,8 +1,10 @@
+import { normalizeUserRole } from "../models/User.js";
+
 const formatComment = (comment) => ({
   id: comment._id,
   content: comment.content,
   author: comment.author?.name || "Unknown",
-  authorRole: comment.author?.role || "student",
+  authorRole: normalizeUserRole(comment.author?.role),
   createdAt: comment.createdAt,
 });
 
@@ -15,7 +17,7 @@ export const formatMaterial = (material, comments = []) => ({
   category: material.category,
   contentText: material.contentText || "",
   author: material.uploadedBy?.name || "Unknown",
-  authorRole: material.uploadedBy?.role || "student",
+  authorRole: normalizeUserRole(material.uploadedBy?.role),
   date: material.createdAt,
   views: material.views || 0,
   downloads: material.downloads || 0,

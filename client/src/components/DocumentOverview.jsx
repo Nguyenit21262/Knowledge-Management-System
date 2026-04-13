@@ -49,10 +49,10 @@ const DocumentOverview = ({ document, setDocument }) => {
     <section className="rounded-[28px] border border-slate-200 bg-white px-12 py-12 shadow-[0_6px_20px_rgba(15,23,42,0.06)]">
       <div className="mb-10 flex items-start justify-between gap-8">
         <div className="flex items-center gap-4">
-          <div className="flex h-[72px] w-[72px] items-center justify-center rounded-3xl bg-[#fbf1dd] text-[#f59e0b]">
+          <div className="flex h-[72px] w-[72px] items-center justify-center rounded-3xl bg-[#e0e7ff] text-[#3b82f6]">
             <ResourceIcon className="h-8 w-8" strokeWidth={1.8} />
           </div>
-          <span className="rounded-full bg-[#fbf1dd] px-5 py-2 text-[1.05rem] font-normal text-slate-900">
+          <span className="rounded-full bg-[#e0e7ff] px-5 py-2 text-[1.05rem] font-normal text-slate-900">
             {document.subject}
           </span>
         </div>
@@ -64,12 +64,12 @@ const DocumentOverview = ({ document, setDocument }) => {
             disabled={isToggling}
             className={`inline-flex items-center gap-3 rounded-2xl border transition-colors px-7 py-4 text-[1.08rem] font-normal ${
               bookmarked 
-                ? "border-[#f59e0b] bg-[#fbf1dd] text-[#d97706]" 
+                ? "border-[#3b82f6] bg-[#e0e7ff] text-[#2563eb]" 
                 : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
             } ${isToggling ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <Bookmark 
-               className={`h-5 w-5 ${bookmarked ? "text-[#d97706] fill-[#d97706]" : "text-[#f59e0b]"}`} 
+               className={`h-5 w-5 ${bookmarked ? "text-[#2563eb] fill-[#2563eb]" : "text-[#3b82f6]"}`} 
                strokeWidth={1.8} 
             />
             {bookmarked ? "Bookmarked" : "Bookmark"}

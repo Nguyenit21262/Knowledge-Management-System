@@ -1,5 +1,7 @@
 import Comment from "../models/Comment.js";
 import Material from "../models/Material.js";
+import { normalizeUserRole } from "../models/User.js";
+import { createCommentNotifications } from "../utils/notificationService.js";
 
 const MAX_COMMENT_LENGTH = 1000;
 
@@ -28,7 +30,7 @@ const buildCommentNode = (comment) => ({
   author: {
     id: comment.author?._id?.toString?.() || "",
     name: comment.author?.name || "Unknown",
-    role: comment.author?.role || "student",
+    role: normalizeUserRole(comment.author?.role),
   },
   children: [],
 });
@@ -126,7 +128,9 @@ export const createComment = async (req, res) => {
       });
     }
 
-    const material = await Material.findById(materialId).select("_id");
+    const material = await Material.findById(materialId).select(
+      "_id uploadedBy title",
+    );
 
     if (!material) {
       return res.status(404).json({
@@ -148,7 +152,7 @@ export const createComment = async (req, res) => {
       parentComment = await Comment.findOne({
         _id: parentId,
         material: materialId,
-      }).select("_id");
+      }).select("_id author content");
 
       if (!parentComment) {
         return res.status(404).json({
@@ -166,6 +170,17 @@ export const createComment = async (req, res) => {
     });
 
     await comment.populate("author", "name role");
+
+    try {
+      await createCommentNotifications({
+        actorId: req.user?._id || req.user?.id || req.userId,
+        material,
+        parentComment,
+        commentId: comment._id,
+      });
+    } catch (notificationError) {
+      console.error("Create comment notification error:", notificationError);
+    }
 
     return res.status(201).json({
       success: true,

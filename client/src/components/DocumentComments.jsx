@@ -12,9 +12,8 @@ import {
 } from "../api/comments.js";
 
 const roleClasses = {
-  student: "bg-[#fbf1dd] text-slate-700",
-  teacher: "bg-slate-100 text-slate-700",
-  admin: "bg-blue-50 text-blue-700",
+  student: "bg-[#e0e7ff] text-slate-700",
+  teacher: "bg-blue-50 text-blue-700",
 };
 
 const getUserInitial = (name) =>
@@ -348,7 +347,7 @@ const DocumentComments = ({ document }) => {
   return (
     <section className="rounded-[28px] border border-slate-200 bg-white px-8 py-10 shadow-[0_6px_20px_rgba(15,23,42,0.06)]">
       <div className="mb-10 flex items-center gap-3 text-slate-950">
-        <MessageSquare className="h-7 w-7 text-[#f59e0b]" strokeWidth={1.8} />
+        <MessageSquare className="h-7 w-7 text-[#3b82f6]" strokeWidth={1.8} />
         <h2 className="text-[2rem] font-medium tracking-tight">
           Comments ({totalComments})
         </h2>

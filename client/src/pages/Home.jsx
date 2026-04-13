@@ -43,7 +43,7 @@ const Home = () => {
                   to={`/documents/${document.id}`}
                   className="rounded-[24px] border border-slate-200 bg-white px-5 py-5 shadow-[0_6px_20px_rgba(15,23,42,0.05)] sm:px-6 sm:py-6"
                 >
-                  <span className="inline-flex rounded-full bg-[#fbf1dd] px-3 py-1 text-[0.9rem] font-normal text-slate-900">
+                  <span className="inline-flex rounded-full bg-[#e0e7ff] px-3 py-1 text-[0.9rem] font-normal text-slate-900">
                     {document.subject}
                   </span>
 
@@ -93,7 +93,7 @@ const Home = () => {
                 >
                   <div className="min-w-0">
                     <div className="mb-3 flex flex-wrap items-center gap-3 text-[0.98rem] font-normal text-slate-500">
-                      <span className="rounded-full bg-[#fbf1dd] px-3 py-1 text-[0.9rem] text-slate-900">
+                      <span className="rounded-full bg-[#e0e7ff] px-3 py-1 text-[0.9rem] text-slate-900">
                         {document.subject}
                       </span>
                       <span>{formatDate(document.date)}</span>

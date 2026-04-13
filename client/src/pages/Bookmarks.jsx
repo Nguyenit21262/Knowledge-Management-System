@@ -33,7 +33,7 @@ const Bookmarks = () => {
       <div className="mx-auto max-w-screen-2xl">
         <div className="mb-8">
           <div className="mb-3 flex items-center gap-3 text-slate-950">
-            <Bookmark className="h-7 w-7 text-[#f59e0b]" strokeWidth={1.8} />
+            <Bookmark className="h-7 w-7 text-[#3b82f6]" strokeWidth={1.8} />
             <h1 className="text-[2.3rem] font-medium tracking-tight">
               Bookmark
             </h1>
@@ -61,7 +61,7 @@ const Bookmarks = () => {
               >
                 <div className="min-w-0">
                   <div className="mb-3 flex flex-wrap items-center gap-3 text-[0.98rem] font-normal text-slate-500">
-                    <span className="rounded-full bg-[#fbf1dd] px-3 py-1 text-[0.9rem] text-slate-900">
+                    <span className="rounded-full bg-[#e0e7ff] px-3 py-1 text-[0.9rem] text-slate-900">
                       {document.subject}
                     </span>
                     <span className="rounded-full bg-slate-100 px-3 py-1 text-[0.9rem]">
