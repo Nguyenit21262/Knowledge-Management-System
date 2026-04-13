@@ -2,20 +2,31 @@ import React, { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import KnowledgeBaseCard from "../../components/admin/KnowledgeBaseCard";
-import { knowledgeBaseSubjects, mockDocuments } from "../../lib/mockDocuments";
+import useMaterials from "../../hooks/useMaterials.js";
 
 const AdminKnowledgeBase = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialSubject = searchParams.get("subject");
   const [searchValue, setSearchValue] = useState("");
+
+  const { materials, isLoading } = useMaterials();
+
+  // Build dynamic subject list from real data
+  const knowledgeBaseSubjects = useMemo(() => {
+    const unique = Array.from(new Set(materials.map((m) => m.subject)))
+      .filter(Boolean)
+      .sort();
+    return ["All", ...unique];
+  }, [materials]);
+
   const [activeSubject, setActiveSubject] = useState(
-    knowledgeBaseSubjects.includes(initialSubject) ? initialSubject : "All"
+    initialSubject && initialSubject !== "All" ? initialSubject : "All"
   );
 
   const normalizedSearch = searchValue.trim().toLowerCase();
   const filteredDocuments = useMemo(
     () =>
-      mockDocuments.filter((document) => {
+      materials.filter((document) => {
         const matchesSubject =
           activeSubject === "All" || document.subject === activeSubject;
         const searchableText =
@@ -24,7 +35,7 @@ const AdminKnowledgeBase = () => {
 
         return matchesSubject && matchesSearch;
       }),
-    [activeSubject, normalizedSearch]
+    [materials, activeSubject, normalizedSearch]
   );
 
   return (
@@ -74,18 +85,24 @@ const AdminKnowledgeBase = () => {
         })}
       </div>
 
-      <section className="mt-8 grid grid-cols-1 gap-4 sm:mt-10 sm:gap-6 xl:grid-cols-2">
-        {filteredDocuments.map((document) => (
-          <KnowledgeBaseCard key={document.id} document={document} />
-        ))}
-      </section>
+      {isLoading ? (
+        <div className="mt-10 py-10 text-center text-slate-500">Loading knowledge base...</div>
+      ) : (
+        <>
+          <section className="mt-8 grid grid-cols-1 gap-4 sm:mt-10 sm:gap-6 xl:grid-cols-2">
+            {filteredDocuments.map((document) => (
+              <KnowledgeBaseCard key={document.id} document={document} />
+            ))}
+          </section>
 
-      {filteredDocuments.length === 0 && (
-        <section className="mt-8 rounded-md border border-slate-200 bg-white px-5 py-10 text-center shadow-[0_6px_20px_rgba(15,23,42,0.04)] sm:mt-10 sm:px-8 sm:py-12">
-          <p className="text-[1rem] font-normal text-slate-500 sm:text-[1.05rem]">
-            No materials match the current search or subject filter.
-          </p>
-        </section>
+          {filteredDocuments.length === 0 && (
+            <section className="mt-8 rounded-md border border-slate-200 bg-white px-5 py-10 text-center shadow-[0_6px_20px_rgba(15,23,42,0.04)] sm:mt-10 sm:px-8 sm:py-12">
+              <p className="text-[1rem] font-normal text-slate-500 sm:text-[1.05rem]">
+                No materials match the current search or subject filter.
+              </p>
+            </section>
+          )}
+        </>
       )}
     </main>
   );

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { getUserMaterials } from "../api/materials.js";
+import { formatRole } from "../utils/formatters.js";
 
 const sidebarUser = {
   name: "Guest User",
@@ -25,13 +26,7 @@ const navItems = [
   { label: "Bookmarks", to: "/bookmarks", icon: Bookmark },
 ];
 
-const formatRole = (role = "") => {
-  if (!role) {
-    return "Guest";
-  }
 
-  return role.charAt(0).toUpperCase() + role.slice(1);
-};
 
 const Sidebar = ({ user = sidebarUser, isMobileOpen, onClose }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -41,10 +36,12 @@ const Sidebar = ({ user = sidebarUser, isMobileOpen, onClose }) => {
   const safeUser = user || sidebarUser;
   const userInitial = safeUser.name.charAt(0).toUpperCase();
 
+  const userId = safeUser?._id || safeUser?.id;
+
   useEffect(() => {
     let isMounted = true;
-    if (safeUser?._id || safeUser?.id) {
-      getUserMaterials(safeUser._id || safeUser.id)
+    if (userId) {
+      getUserMaterials(userId)
         .then((data) => {
           if (isMounted) setUploadCount(data.length);
         })
@@ -53,7 +50,7 @@ const Sidebar = ({ user = sidebarUser, isMobileOpen, onClose }) => {
     return () => {
       isMounted = false;
     };
-  }, [safeUser]);
+  }, [userId]);
 
   return (
     <aside
@@ -87,7 +84,7 @@ const Sidebar = ({ user = sidebarUser, isMobileOpen, onClose }) => {
                 {safeUser.name}
               </h2>
               <p className="text-[0.95rem] font-normal text-slate-500">
-                {formatRole(safeUser.role)}
+                {formatRole(safeUser.role, "Guest")}
               </p>
             </div>
           )}

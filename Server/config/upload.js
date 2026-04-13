@@ -16,6 +16,11 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB — matches the UI specification
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+});
 
 export default upload;

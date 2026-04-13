@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { normalizeWhitespace } from "../utils/normalizeText.js";
 
-export const MATERIAL_TYPES = ["PDF", "VIDEO"];
+export const MATERIAL_TYPES = ["PDF", "VIDEO", "IMAGE"];
 
 const MaterialSchema = new mongoose.Schema(
   {

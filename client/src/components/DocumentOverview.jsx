@@ -1,38 +1,22 @@
-import React, { useState } from 'react'
-import { Bookmark, CalendarDays, Download, FileText, UserRound, Video, Eye } from 'lucide-react'
+import React from 'react'
+import { Bookmark, CalendarDays, Download, FileText, Image, UserRound, Video, Eye } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { useAppContext } from '../context/useAppContext.js'
-import { toggleBookmark } from '../api/users.js'
+import useBookmarks from '../hooks/useBookmarks.js'
 import { incrementDownload } from '../api/materials.js'
+import { API_BASE_URL } from '../api/httpClient.js'
+import FileViewer from '../components/FileViewer'
 
 const iconMap = {
   PDF: FileText,
   VIDEO: Video,
+  IMAGE: Image,
 }
 
-const DocumentOverview = ({ document }) => {
+const DocumentOverview = ({ document, setDocument }) => {
   const ResourceIcon = iconMap[document.type] || FileText
-  const { user, refreshCurrentUser } = useAppContext()
-  
-  const isBookmarked = user?.bookmarks?.includes(document.id) || false
-  const [isToggling, setIsToggling] = useState(false)
+  const { isBookmarked, isToggling, handleToggleBookmark } = useBookmarks()
 
-  const handleToggleBookmark = async () => {
-    if (!user) {
-      return toast.error("Please log in to save bookmarks.");
-    }
-    
-    try {
-      setIsToggling(true);
-      await toggleBookmark(document.id);
-      await refreshCurrentUser();
-      toast.success(isBookmarked ? "Removed from bookmarks" : "Added to bookmarks");
-    } catch {
-      toast.error("Failed to save bookmark");
-    } finally {
-      setIsToggling(false);
-    }
-  };
+  const bookmarked = isBookmarked(document.id)
 
   const handleDownload = async () => {
     try {
@@ -40,14 +24,20 @@ const DocumentOverview = ({ document }) => {
         return toast.error("File URL is missing for this document.");
       }
       
-      const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-      const hardDownloadUrl = `${baseURL}/api/materials/${document.id}/download-file`;
+      const hardDownloadUrl = `${API_BASE_URL}/api/materials/${document.id}/download-file`;
         
       window.location.href = hardDownloadUrl;
       
       await incrementDownload(document.id);
-      // Optional: you can manually bump UI state so it shows immediately
-      document.downloads += 1;
+
+      // Update download count immutably via parent state setter
+      if (setDocument) {
+        setDocument((prev) => ({
+          ...prev,
+          downloads: (prev.downloads || 0) + 1,
+        }));
+      }
+
       toast.success("Download started!");
     } catch (error) {
       // Ignore background registration error to not annoy the user
@@ -70,19 +60,19 @@ const DocumentOverview = ({ document }) => {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={handleToggleBookmark}
+            onClick={() => handleToggleBookmark(document.id)}
             disabled={isToggling}
             className={`inline-flex items-center gap-3 rounded-2xl border transition-colors px-7 py-4 text-[1.08rem] font-normal ${
-              isBookmarked 
+              bookmarked 
                 ? "border-[#f59e0b] bg-[#fbf1dd] text-[#d97706]" 
                 : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
             } ${isToggling ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <Bookmark 
-               className={`h-5 w-5 ${isBookmarked ? "text-[#d97706] fill-[#d97706]" : "text-[#f59e0b]"}`} 
+               className={`h-5 w-5 ${bookmarked ? "text-[#d97706] fill-[#d97706]" : "text-[#f59e0b]"}`} 
                strokeWidth={1.8} 
             />
-            {isBookmarked ? "Bookmarked" : "Bookmark"}
+            {bookmarked ? "Bookmarked" : "Bookmark"}
           </button>
 
           <button
@@ -102,6 +92,8 @@ const DocumentOverview = ({ document }) => {
         </h1>
         <p className="text-[1.2rem] leading-9 text-slate-600">{document.description}</p>
       </div>
+
+      <FileViewer document={document} />
 
       <div className="border-t border-slate-200 pt-10">
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-12 lg:gap-x-24 gap-y-10">

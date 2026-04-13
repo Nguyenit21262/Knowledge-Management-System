@@ -1,99 +1,225 @@
 import Comment from "../models/Comment.js";
 import Material from "../models/Material.js";
-import { normalizeWhitespace } from "../utils/normalizeText.js";
 
-const formatComment = (comment) => ({
+const MAX_COMMENT_LENGTH = 1000;
+
+const isValidObjectId = (value) => /^[0-9a-fA-F]{24}$/.test(String(value || ""));
+
+const validateContent = (content) => {
+  if (!content || !content.trim()) {
+    return "Comment content is required.";
+  }
+
+  if (content.trim().length > MAX_COMMENT_LENGTH) {
+    return `Comment must be ${MAX_COMMENT_LENGTH} characters or less.`;
+  }
+
+  return null;
+};
+
+const buildCommentNode = (comment) => ({
+  _id: comment._id.toString(),
   id: comment._id.toString(),
+  materialId: comment.material?.toString?.() || comment.material,
+  parentId: comment.parent?.toString?.() || comment.parent || null,
   content: comment.content,
-  author: comment.author?.name || "Unknown",
-  authorRole: comment.author?.role || "student",
   createdAt: comment.createdAt,
+  updatedAt: comment.updatedAt,
+  author: {
+    id: comment.author?._id?.toString?.() || "",
+    name: comment.author?.name || "Unknown",
+    role: comment.author?.role || "student",
+  },
+  children: [],
 });
+
+const buildCommentTree = (comments) => {
+  const commentMap = new Map();
+  const rootComments = [];
+
+  comments.forEach((comment) => {
+    const node = buildCommentNode(comment);
+    commentMap.set(node.id, node);
+  });
+
+  comments.forEach((comment) => {
+    const currentId = comment._id.toString();
+    const parentId = comment.parent?.toString?.() || null;
+    const currentNode = commentMap.get(currentId);
+
+    if (parentId && commentMap.has(parentId)) {
+      commentMap.get(parentId).children.push(currentNode);
+      return;
+    }
+
+    rootComments.push(currentNode);
+  });
+
+  const sortTreeByNewest = (nodes) =>
+    [...nodes]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .map((node) => ({
+        ...node,
+        children: sortTreeByNewest(node.children || []),
+      }));
+
+  return sortTreeByNewest(rootComments);
+};
+
+const deleteCommentBranch = async (commentId) => {
+  const childComments = await Comment.find({ parent: commentId }).select("_id");
+
+  for (const childComment of childComments) {
+    await deleteCommentBranch(childComment._id);
+  }
+
+  await Comment.findByIdAndDelete(commentId);
+};
 
 export const getCommentsByMaterial = async (req, res) => {
   try {
-    const comments = await Comment.find({ material: req.params.materialId })
+    const { materialId } = req.params;
+
+    if (!isValidObjectId(materialId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid material id.",
+      });
+    }
+
+    const comments = await Comment.find({ material: materialId })
       .populate("author", "name role")
       .sort({ createdAt: 1 })
       .lean();
 
-    return res.json(comments.map(formatComment));
-  } catch (err) {
+    return res.status(200).json({
+      success: true,
+      comments: buildCommentTree(comments),
+    });
+  } catch (error) {
+    console.error("Get comments by material error:", error);
     return res.status(500).json({
-      message: "Server error while fetching comments.",
-      error: err.message,
+      success: false,
+      message: "Failed to fetch comments.",
     });
   }
 };
 
 export const createComment = async (req, res) => {
   try {
-    const content = normalizeWhitespace(
-      typeof req.body?.content === "string" ? req.body.content : "",
-    );
+    const { materialId } = req.params;
+    const { content, parentId } = req.body;
 
-    if (!content) {
+    if (!isValidObjectId(materialId)) {
       return res.status(400).json({
-        message: "Comment content cannot be empty.",
+        success: false,
+        message: "Invalid material id.",
       });
     }
 
-    const material = await Material.findById(req.params.materialId).lean();
+    const contentError = validateContent(content);
+
+    if (contentError) {
+      return res.status(400).json({
+        success: false,
+        message: contentError,
+      });
+    }
+
+    const material = await Material.findById(materialId).select("_id");
 
     if (!material) {
       return res.status(404).json({
+        success: false,
         message: "Material not found.",
       });
     }
 
+    let parentComment = null;
+
+    if (parentId) {
+      if (!isValidObjectId(parentId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid parent comment id.",
+        });
+      }
+
+      parentComment = await Comment.findOne({
+        _id: parentId,
+        material: materialId,
+      }).select("_id");
+
+      if (!parentComment) {
+        return res.status(404).json({
+          success: false,
+          message: "Parent comment not found.",
+        });
+      }
+    }
+
     const comment = await Comment.create({
-      material: req.params.materialId,
-      author: req.user._id,
-      content,
+      material: materialId,
+      author: req.user?._id || req.user?.id || req.userId,
+      parent: parentComment?._id || null,
+      content: content.trim(),
     });
 
     await comment.populate("author", "name role");
 
     return res.status(201).json({
-      message: "Comment created successfully.",
-      comment: formatComment(comment),
+      success: true,
+      message: "Comment posted successfully.",
+      comment: buildCommentNode(comment),
     });
-  } catch (err) {
+  } catch (error) {
+    console.error("Create comment error:", error);
     return res.status(500).json({
-      message: "Server error while creating comment.",
-      error: err.message,
+      success: false,
+      message: "Failed to create comment.",
     });
   }
 };
 
 export const deleteComment = async (req, res) => {
   try {
-    const comment = await Comment.findById(req.params.commentId);
+    const { commentId } = req.params;
+    const currentUserId = req.user?._id?.toString?.() || req.userId?.toString?.();
+
+    if (!isValidObjectId(commentId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid comment id.",
+      });
+    }
+
+    const comment = await Comment.findById(commentId).select("author");
 
     if (!comment) {
       return res.status(404).json({
+        success: false,
         message: "Comment not found.",
       });
     }
 
-    const isOwner = comment.author.toString() === req.user.id;
-    const canModerate = ["teacher", "admin"].includes(req.user.role);
-
-    if (!isOwner && !canModerate) {
+    if (comment.author.toString() !== currentUserId) {
       return res.status(403).json({
-        message: "You do not have permission to delete this comment.",
+        success: false,
+        message: "You can only delete your own comments.",
       });
     }
 
-    await Comment.findByIdAndDelete(req.params.commentId);
+    await deleteCommentBranch(commentId);
 
-    return res.json({
+    return res.status(200).json({
+      success: true,
       message: "Comment deleted successfully.",
     });
-  } catch (err) {
+  } catch (error) {
+    console.error("Delete comment error:", error);
     return res.status(500).json({
-      message: "Server error while deleting comment.",
-      error: err.message,
+      success: false,
+      message: "Failed to delete comment.",
     });
   }
 };

@@ -1,22 +1,18 @@
 import mongoose from "mongoose";
-import Material from "./Material.js";
-import { normalizeWhitespace } from "../utils/normalizeText.js";
 
 const syncMaterialCommentCount = async (materialId) => {
   if (!materialId) {
     return;
   }
 
-  const commentCount = await mongoose
-    .model("Comment")
-    .countDocuments({ material: materialId });
+  const Material = mongoose.model("Material");
+  const Comment = mongoose.model("Comment");
+  const commentsCount = await Comment.countDocuments({ material: materialId });
 
-  await Material.findByIdAndUpdate(materialId, {
-    commentsCount: commentCount,
-  });
+  await Material.findByIdAndUpdate(materialId, { commentsCount });
 };
 
-const CommentSchema = new mongoose.Schema(
+const commentSchema = new mongoose.Schema(
   {
     material: {
       type: mongoose.Schema.Types.ObjectId,
@@ -30,42 +26,32 @@ const CommentSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    parent: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Comment",
+      default: null,
+    },
     content: {
       type: String,
       required: true,
       trim: true,
-      minlength: 1,
-      maxlength: 2000,
-      set: normalizeWhitespace,
+      maxlength: 1000,
     },
   },
-  {
-    timestamps: true,
-    versionKey: false,
-  },
+  { timestamps: true, versionKey: false },
 );
 
-CommentSchema.index({ material: 1, createdAt: 1 });
-CommentSchema.index({ author: 1, createdAt: -1 });
+commentSchema.index({ material: 1, parent: 1, createdAt: 1 });
+commentSchema.index({ author: 1, createdAt: -1 });
 
-CommentSchema.post("save", async function () {
+commentSchema.post("save", async function handleAfterSave() {
   await syncMaterialCommentCount(this.material);
 });
 
-CommentSchema.post("findOneAndDelete", async function (doc) {
-  if (doc) {
-    await syncMaterialCommentCount(doc.material);
-  }
+commentSchema.post("findOneAndDelete", async function handleAfterDelete(doc) {
+  await syncMaterialCommentCount(doc?.material);
 });
 
-CommentSchema.post(
-  "deleteOne",
-  { document: true, query: false },
-  async function () {
-    await syncMaterialCommentCount(this.material);
-  },
-);
-
-const Comment = mongoose.model("Comment", CommentSchema);
+const Comment = mongoose.model("Comment", commentSchema);
 
 export default Comment;

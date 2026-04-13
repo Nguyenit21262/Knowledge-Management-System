@@ -1,76 +1,29 @@
-import React from "react";
-import {
-  Atom,
-  Calculator,
-  FlaskConical,
-  Globe,
-  Leaf,
-  PenLine,
-} from "lucide-react";
+import React, { useMemo } from "react";
+import { BookOpen } from "lucide-react";
 import CategoryCard from "../../components/admin/CategoryCard";
-import { getSubjectSummaries } from "../../lib/mockDocuments";
-
-const categoryConfigs = {
-  Biology: {
-    icon: Leaf,
-    iconBackground: "bg-emerald-100",
-    iconColor: "text-emerald-600",
-  },
-  Chemistry: {
-    icon: FlaskConical,
-    iconBackground: "bg-amber-100",
-    iconColor: "text-amber-700",
-  },
-  Physics: {
-    icon: Atom,
-    iconBackground: "bg-slate-200",
-    iconColor: "text-slate-700",
-  },
-  Mathematics: {
-    icon: Calculator,
-    iconBackground: "bg-rose-100",
-    iconColor: "text-rose-500",
-  },
-  English: {
-    icon: PenLine,
-    iconBackground: "bg-orange-100",
-    iconColor: "text-orange-700",
-  },
-  History: {
-    icon: Globe,
-    iconBackground: "bg-blue-100",
-    iconColor: "text-blue-700",
-  },
-};
-
-const categoryOrder = [
-  "Biology",
-  "Chemistry",
-  "Physics",
-  "Mathematics",
-  "English",
-  "History",
-];
+import useMaterials from "../../hooks/useMaterials.js";
 
 const AdminCategories = () => {
-  const categoryMap = new Map(
-    getSubjectSummaries().map((summary) => [summary.subject, summary])
-  );
+  const { materials, isLoading } = useMaterials();
 
-  const categories = categoryOrder
-    .map((subject) => {
-      const summary = categoryMap.get(subject);
+  // Build category summaries dynamically from real data
+  const categories = useMemo(() => {
+    const summary = materials.reduce((acc, doc) => {
+      const subject = doc.subject;
+      if (!subject) return acc;
 
-      if (!summary) {
-        return null;
+      if (!acc[subject]) {
+        acc[subject] = { subject, count: 0, views: 0, downloads: 0 };
       }
 
-      return {
-        ...summary,
-        ...categoryConfigs[subject],
-      };
-    })
-    .filter(Boolean);
+      acc[subject].count += 1;
+      acc[subject].views += doc.views || 0;
+      acc[subject].downloads += doc.downloads || 0;
+      return acc;
+    }, {});
+
+    return Object.values(summary).sort((a, b) => b.count - a.count);
+  }, [materials]);
 
   return (
     <main className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
@@ -81,11 +34,17 @@ const AdminCategories = () => {
         Browse knowledge by subject area.
       </p>
 
-      <section className="mt-8 grid grid-cols-1 gap-4 sm:mt-10 sm:grid-cols-2 sm:gap-6 xl:grid-cols-3">
-        {categories.map((category) => (
-          <CategoryCard key={category.subject} category={category} />
-        ))}
-      </section>
+      {isLoading ? (
+        <div className="mt-10 py-10 text-center text-slate-500">Loading categories...</div>
+      ) : categories.length === 0 ? (
+        <div className="mt-10 py-10 text-center text-slate-500">No categories found.</div>
+      ) : (
+        <section className="mt-8 grid grid-cols-1 gap-4 sm:mt-10 sm:grid-cols-2 sm:gap-6 xl:grid-cols-3">
+          {categories.map((category) => (
+            <CategoryCard key={category.subject} category={category} />
+          ))}
+        </section>
+      )}
     </main>
   );
 };

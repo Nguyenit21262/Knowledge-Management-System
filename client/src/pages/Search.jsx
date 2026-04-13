@@ -1,56 +1,43 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { BookOpen, CalendarDays, Eye, Search as SearchIcon } from "lucide-react";
 import { Link } from "react-router-dom";
-import { getAllMaterials } from "../api/materials.js";
+import useMaterials from "../hooks/useMaterials.js";
+import { formatDate } from "../utils/formatters.js";
 import toast from "react-hot-toast";
 
 const Search = () => {
   const [query, setQuery] = useState("");
   const [activeSubject, setActiveSubject] = useState("All");
-  const [materials, setMaterials] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { materials, isLoading, error } = useMaterials();
 
   useEffect(() => {
-    const fetchMaterials = async () => {
-      try {
-        const data = await getAllMaterials();
-        setMaterials(data);
-      } catch (error) {
-        toast.error("Failed to load documents for search.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchMaterials();
-  }, []);
+    if (error) toast.error("Failed to load documents for search.");
+  }, [error]);
 
   // Compute dynamic subjects from the fetched materials
-  const uniqueSubjects = Array.from(new Set(materials.map(m => m.subject))).filter(Boolean).sort();
-  const filterSubjects = ["All", ...uniqueSubjects];
+  const filterSubjects = useMemo(() => {
+    const unique = Array.from(new Set(materials.map((m) => m.subject)))
+      .filter(Boolean)
+      .sort();
+    return ["All", ...unique];
+  }, [materials]);
 
   const normalizedQuery = query.trim().toLowerCase();
-  
-  const filteredDocuments = materials.filter((document) => {
-    const matchesSubject =
-      activeSubject === "All" || document.subject === activeSubject;
-      
-    // Include the description in the searchable text to make search more robust
-    const searchableText =
-      `${document.title} ${document.subject} ${document.author} ${document.category} ${document.description || ""}`.toLowerCase();
-      
-    const matchesQuery = searchableText.includes(normalizedQuery);
 
-    return matchesSubject && matchesQuery;
-  });
+  const filteredDocuments = useMemo(() => {
+    return materials.filter((document) => {
+      const matchesSubject =
+        activeSubject === "All" || document.subject === activeSubject;
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "Unknown Date";
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+      // Include the description in the searchable text to make search more robust
+      const searchableText =
+        `${document.title} ${document.subject} ${document.author} ${document.category} ${document.description || ""}`.toLowerCase();
+
+      const matchesQuery = searchableText.includes(normalizedQuery);
+
+      return matchesSubject && matchesQuery;
     });
-  };
+  }, [materials, activeSubject, normalizedQuery]);
 
   return (
     <main className="min-h-[calc(100vh-97px)] bg-[#f6f9ff] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 xl:px-10">

@@ -2,19 +2,14 @@ import React, { useEffect, useState } from "react";
 import { Bell, PanelLeft, Search, Upload } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/useAppContext.js";
+import { formatRole } from "../utils/formatters.js";
 
 const guestUser = {
   name: "Guest User",
   role: "guest",
 };
 
-const formatRole = (role = "") => {
-  if (!role) {
-    return "Guest";
-  }
 
-  return role.charAt(0).toUpperCase() + role.slice(1);
-};
 
 const Navbar = ({ user = guestUser, onOpenSidebar }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -61,7 +56,7 @@ const Navbar = ({ user = guestUser, onOpenSidebar }) => {
               </h1>
               {isAuthenticated && (
                 <p className="truncate text-sm text-slate-500">
-                  {safeUser.name} · {formatRole(safeUser.role)}
+                  {safeUser.name} · {formatRole(safeUser.role, "Guest")}
                 </p>
               )}
             </div>
@@ -113,7 +108,7 @@ const Navbar = ({ user = guestUser, onOpenSidebar }) => {
                     {safeUser.name}
                   </p>
                   <p className="truncate text-xs text-slate-500">
-                    {safeUser.email || formatRole(safeUser.role)}
+                    {safeUser.email || formatRole(safeUser.role, "Guest")}
                   </p>
                 </div>
 

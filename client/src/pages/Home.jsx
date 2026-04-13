@@ -1,43 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Eye, UserRound } from "lucide-react";
 import { Link } from "react-router-dom";
-import { getAllMaterials } from "../api/materials.js";
+import useMaterials from "../hooks/useMaterials.js";
+import { formatDate } from "../utils/formatters.js";
 import toast from "react-hot-toast";
 
 const Home = () => {
-  const [materials, setMaterials] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { materials, isLoading, error } = useMaterials();
 
   useEffect(() => {
-    const fetchMaterials = async () => {
-      try {
-        const data = await getAllMaterials();
-        setMaterials(data);
-      } catch (error) {
-        toast.error("Failed to load documents.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchMaterials();
-  }, []);
+    if (error) toast.error("Failed to load documents.");
+  }, [error]);
 
   // Compute Featured: Top 4 by views
-  const featuredDocuments = [...materials]
-    .sort((a, b) => (b.views || 0) - (a.views || 0))
-    .slice(0, 4);
+  const featuredDocuments = useMemo(
+    () => [...materials].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 4),
+    [materials],
+  );
 
   // Compute Recent: Already sorted by createdAt descending from the backend
   const recentDocuments = materials;
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "Unknown Date";
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
 
   return (
     <main className="min-h-[calc(100vh-97px)] bg-[#f6f9ff] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 xl:px-10">

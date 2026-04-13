@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAppContext } from "../context/useAppContext.js";
+import useAuthRedirect from "../hooks/useAuthRedirect.js";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -13,7 +14,8 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  const { isAuthenticated, isAuthLoading, register, user } = useAppContext();
+  const { register } = useAppContext();
+  useAuthRedirect("/");
 
   const handleChange = (field) => (event) => {
     setFormData((current) => ({
@@ -42,11 +44,7 @@ const Register = () => {
     }
   };
 
-  useEffect(() => {
-    if (!isAuthLoading && isAuthenticated) {
-      navigate("/", { replace: true });
-    }
-  }, [isAuthenticated, isAuthLoading, navigate, user?.role]);
+
 
   return (
     <main className="min-h-screen bg-[#f6f1eb] p-3 sm:p-6">

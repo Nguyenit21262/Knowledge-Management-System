@@ -1,9 +1,9 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import { ChevronDown, Upload } from "lucide-react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { uploadMaterial } from "../api/materials.js";
-import { httpClient } from "../api/httpClient.js";
+import useTaxonomy from "../hooks/useTaxonomy.js";
 
 const UploadNew = () => {
   const navigate = useNavigate();
@@ -17,24 +17,8 @@ const UploadNew = () => {
   const [selectedFileObj, setSelectedFileObj] = useState(null);
   const [selectedFileName, setSelectedFileName] = useState("");
   const [isUploading, setIsUploading] = useState(false);
-  const [subjectOptions, setSubjectOptions] = useState([]);
-  const [categoryOptions, setCategoryOptions] = useState([]);
 
-  useEffect(() => {
-    const fetchTaxonomy = async () => {
-      try {
-        const [subRes, catRes] = await Promise.all([
-          httpClient.get("/api/subjects"),
-          httpClient.get("/api/categories")
-        ]);
-        setSubjectOptions(subRes.data?.map(s => s.name) || []);
-        setCategoryOptions(catRes.data?.map(c => c.name) || []);
-      } catch (err) {
-        console.error("Failed to load taxonomy options.");
-      }
-    };
-    fetchTaxonomy();
-  }, []);
+  const { subjects: subjectOptions, categories: categoryOptions } = useTaxonomy();
 
   const handleChange = (event) => {
     const { name, value } = event.target;

@@ -20,6 +20,10 @@ export const detectFileType = (filename = "") => {
     return "VIDEO";
   }
 
+  if ([".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp"].includes(ext)) {
+    return "IMAGE";
+  }
+
   return "PDF";
 };
 

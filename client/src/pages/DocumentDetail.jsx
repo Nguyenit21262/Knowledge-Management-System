@@ -3,16 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 import DocumentComments from '../components/DocumentComments'
 import DocumentOverview from '../components/DocumentOverview'
 import { getMaterialById } from '../api/materials.js'
+import { formatDate } from '../utils/formatters.js'
 import toast from 'react-hot-toast'
-
-const formatDate = (dateString) => {
-  if (!dateString) return "Unknown Date";
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-};
 
 const DocumentDetail = () => {
   const { documentId } = useParams()
@@ -23,19 +15,10 @@ const DocumentDetail = () => {
     const fetchDocument = async () => {
       try {
         const data = await getMaterialById(documentId);
-        
-        // Map backend formatting to exactly what the UI components expect
-        const mappedDocument = {
+        setDocument({
           ...data,
           date: formatDate(data.date),
-          comments: (data.comments || []).map(comment => ({
-            ...comment,
-            role: comment.authorRole,
-            date: formatDate(comment.createdAt)
-          }))
-        };
-        
-        setDocument(mappedDocument);
+        });
       } catch (error) {
         toast.error("Failed to load document details.");
       } finally {
@@ -77,7 +60,8 @@ const DocumentDetail = () => {
   return (
     <main className="min-h-[calc(100vh-117px)] bg-[#f6f9ff] px-10 py-12">
       <div className="mx-auto max-w-screen-2xl space-y-8">
-        <DocumentOverview document={document} />
+        <DocumentOverview document={document} setDocument={setDocument} />
+        {/* <FileViewer document={document} /> */}
         <DocumentComments document={document} />
       </div>
     </main>

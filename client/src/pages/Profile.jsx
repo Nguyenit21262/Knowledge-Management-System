@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   BookOpen,
   Bookmark,
@@ -12,13 +12,9 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAppContext } from "../context/useAppContext.js";
-
-const profileStats = {
-  bio: "No bio added yet.",
-  downloads: 34,
-  comments: 23,
-  bookmarked: 18,
-};
+import { formatRole } from "../utils/formatters.js";
+import { getProfileSummary } from "../api/users.js";
+import toast from "react-hot-toast";
 
 const formatMemberSince = (dateValue) => {
   if (!dateValue) {
@@ -32,24 +28,62 @@ const formatMemberSince = (dateValue) => {
   });
 };
 
-const formatRole = (role = "") => {
-  if (!role) {
-    return "Student";
-  }
-
-  return role.charAt(0).toUpperCase() + role.slice(1);
-};
+const getUserInitial = (name) =>
+  String(name || "?").trim().charAt(0).toUpperCase() || "?";
 
 const Profile = () => {
   const { user } = useAppContext();
+  const [profileData, setProfileData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const profile = {
-    name: user?.name || "Guest User",
-    email: user?.email || "No email available",
-    role: formatRole(user?.role),
-    memberSince: formatMemberSince(user?.createdAt),
-    ...profileStats,
-  };
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!user) {
+        setProfileData(null);
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+
+      try {
+        const data = await getProfileSummary();
+        setProfileData(data);
+      } catch (error) {
+        toast.error(error.message || "Failed to load profile.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, [user]);
+
+  const profile = useMemo(() => {
+    const userInfo = profileData?.user || user;
+    const stats = profileData?.stats || {};
+
+    return {
+      name: userInfo?.name || "Guest User",
+      email: userInfo?.email || "No email available",
+      role: formatRole(userInfo?.role),
+      memberSince: formatMemberSince(userInfo?.createdAt),
+      materialsUploaded: stats.materialsUploaded || 0,
+      downloads: stats.totalDownloads || 0,
+      comments: stats.commentsPosted || 0,
+      bookmarked: stats.bookmarked || userInfo?.bookmarks?.length || 0,
+    };
+  }, [profileData, user]);
+
+  if (isLoading) {
+    return (
+      <main className="min-h-[calc(100vh-97px)] bg-[#f6f9ff] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 xl:px-10">
+        <div className="mx-auto max-w-[1440px] rounded-[28px] border border-slate-200 bg-white px-6 py-10 text-center text-slate-500 shadow-[0_6px_20px_rgba(15,23,42,0.05)]">
+          Loading profile...
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-[calc(100vh-97px)] bg-[#f6f9ff] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 xl:px-10">
@@ -70,8 +104,8 @@ const Profile = () => {
           </div>
 
           <div className="mb-10 flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:gap-9">
-            <div className="flex h-[112px] w-[112px] items-center justify-center rounded-full bg-[var(--theme-blue)] text-white sm:h-[146px] sm:w-[146px]">
-              <UserRound className="h-12 w-12 sm:h-16 sm:w-16" strokeWidth={1.7} />
+            <div className="flex h-[112px] w-[112px] items-center justify-center rounded-full bg-[var(--theme-blue)] text-[2.4rem] font-semibold text-white sm:h-[146px] sm:w-[146px] sm:text-[3rem]">
+              {getUserInitial(profile.name)}
             </div>
 
             <div className="min-w-0">
@@ -134,10 +168,10 @@ const Profile = () => {
                     className="h-6 w-6 text-[var(--theme-blue)]"
                     strokeWidth={1.7}
                   />
-                  <span className="text-[1rem] font-medium">Bio</span>
+                  <span className="text-[1rem] font-medium">Materials Uploaded</span>
                 </div>
                 <p className="text-[1.05rem] font-normal text-slate-950">
-                  {profile.bio}
+                  {profile.materialsUploaded}
                 </p>
               </div>
 
@@ -170,7 +204,7 @@ const Profile = () => {
                 </div>
                 <div>
                   <p className="text-[1rem] font-normal text-slate-600">
-                    Materials Downloaded
+                    Total Downloads
                   </p>
                   <p className="text-[2rem] font-medium text-slate-950">
                     {profile.downloads}

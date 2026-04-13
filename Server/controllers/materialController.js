@@ -136,7 +136,7 @@ export const getMaterialById = async (req, res) => {
     const material = await Material.findByIdAndUpdate(
       req.params.id,
       { $inc: { views: 1 } },
-      { new: true }
+      { returnDocument: "after" },
     )
       .populate("uploadedBy", "name role")
       .lean();
@@ -318,7 +318,7 @@ export const incrementDownload = async (req, res) => {
     const material = await Material.findByIdAndUpdate(
       req.params.id,
       { $inc: { downloads: 1 } },
-      { new: true },
+      { returnDocument: "after" },
     );
 
     if (!material) {
@@ -350,7 +350,14 @@ export const deleteMaterial = async (req, res) => {
     }
 
     deleteUploadedFile(material.fileUrl);
-    await Comment.deleteMany({ material: req.params.id });
+
+    // Delete comments one-by-one so Mongoose post hooks fire
+    // (deleteMany does NOT trigger document-level post hooks).
+    const relatedComments = await Comment.find({ material: req.params.id }).select("_id");
+    await Promise.all(
+      relatedComments.map((c) => Comment.findByIdAndDelete(c._id)),
+    );
+
     await Material.findByIdAndDelete(req.params.id);
 
     return res.json({

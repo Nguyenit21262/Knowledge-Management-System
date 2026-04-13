@@ -1,47 +1,31 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Bookmark, Trash2, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
-import { getAllMaterials } from "../api/materials.js";
-import { toggleBookmark } from "../api/users.js";
+import useMaterials from "../hooks/useMaterials.js";
+import useBookmarks from "../hooks/useBookmarks.js";
 import { useAppContext } from "../context/useAppContext.js";
 import toast from "react-hot-toast";
 
 const Bookmarks = () => {
-  const { user, refreshCurrentUser } = useAppContext();
-  const [bookmarkedDocuments, setBookmarkedDocuments] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAppContext();
+  const { handleRemoveBookmark, isToggling } = useBookmarks();
+
+  const hasBookmarks = user?.bookmarks?.length > 0;
+  const { materials, isLoading, error } = useMaterials({ skip: !hasBookmarks });
 
   useEffect(() => {
-    const fetchBookmarks = async () => {
-      if (!user || !user.bookmarks || user.bookmarks.length === 0) {
-        setBookmarkedDocuments([]);
-        setIsLoading(false);
-        return;
-      }
+    if (error) toast.error("Failed to load your bookmarks.");
+  }, [error]);
 
-      try {
-        const allMaterials = await getAllMaterials();
-        const myBookmarks = allMaterials.filter(doc => user.bookmarks.includes(doc.id));
-        setBookmarkedDocuments(myBookmarks);
-      } catch (error) {
-        toast.error("Failed to load your bookmarks.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchBookmarks();
-  }, [user]);
+  // Filter materials to only show bookmarked ones
+  const bookmarkedDocuments = useMemo(() => {
+    if (!user?.bookmarks?.length) return [];
+    const bookmarkSet = new Set(user.bookmarks.map(String));
+    return materials.filter((doc) => bookmarkSet.has(String(doc.id)));
+  }, [materials, user?.bookmarks]);
 
   const removeBookmark = async (documentId) => {
-    try {
-      await toggleBookmark(documentId);
-      await refreshCurrentUser();
-      setBookmarkedDocuments((prev) => prev.filter((doc) => doc.id !== documentId));
-      toast.success("Removed from bookmarks");
-    } catch {
-      toast.error("Failed to remove bookmark");
-    }
+    await handleRemoveBookmark(documentId);
   };
 
   return (
@@ -104,8 +88,9 @@ const Bookmarks = () => {
                 <button
                   type="button"
                   onClick={() => removeBookmark(document.id)}
+                  disabled={isToggling}
                   title="Remove from bookmarks"
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-red-500 hover:bg-red-50 transition-colors"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
                 >
                   <Trash2 className="h-5 w-5" strokeWidth={1.7} />
                 </button>

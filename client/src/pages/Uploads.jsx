@@ -1,29 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { FileText, ThumbsUp, Pencil, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
-import { getUserMaterials, deleteMaterial } from "../api/materials.js";
+import { deleteMaterial } from "../api/materials.js";
+import useMaterials from "../hooks/useMaterials.js";
 import { useAppContext } from "../context/useAppContext.js";
 
 const Uploads = () => {
   const { user } = useAppContext();
-  const [materials, setMaterials] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchMyUploads = async () => {
-      if (!user) return;
-      try {
-        const data = await getUserMaterials(user._id || user.id);
-        setMaterials(data);
-      } catch (error) {
-        toast.error("Failed to fetch your uploads.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchMyUploads();
-  }, [user]);
+  const userId = user?._id || user?.id;
+  const { materials, isLoading, setMaterials } = useMaterials({
+    userId,
+    skip: !userId,
+  });
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this document?")) return;
