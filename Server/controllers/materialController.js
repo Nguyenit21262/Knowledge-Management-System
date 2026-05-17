@@ -1,13 +1,17 @@
-import path from "path";
 import Category from "../models/Category.js";
 import Comment from "../models/Comment.js";
 import Material from "../models/Material.js";
 import Subject from "../models/Subject.js";
 import {
+  buildMaterialDownloadName,
   detectFileType,
-  deleteUploadedFile,
-  uploadDir,
+  getMimeType,
 } from "../utils/fileHelpers.js";
+import {
+  deleteGridFsFile,
+  openGridFsDownloadStream,
+  uploadBufferToGridFs,
+} from "../utils/gridFs.js";
 import { formatMaterial } from "../utils/materialFormatter.js";
 import { extractPdfText } from "../utils/pdfHelpers.js";
 import { normalizeWhitespace } from "../utils/normalizeText.js";
@@ -53,7 +57,6 @@ const buildMaterialFilter = ({ search, subject, type, category, uploadedBy, lett
     filter.type = normalizedType.toUpperCase();
   }
 
-  // Filter by first letter of title (case-insensitive)
   if (normalizedLetter && /^[A-Z]$/.test(normalizedLetter)) {
     filter.title = {
       ...(filter.title || {}),
@@ -175,6 +178,33 @@ const canManageMaterial = (req, material) => {
   return currentUserRole === "teacher" || currentUserId === uploadedById;
 };
 
+const streamMaterialBinary = (material, res, { asAttachment = false } = {}) =>
+  new Promise((resolve, reject) => {
+    if (!material?.fileId) {
+      reject(new Error("Stored file reference is missing."));
+      return;
+    }
+
+    const originalFilename = material.originalFilename || "file";
+    const responseFilename = asAttachment
+      ? buildMaterialDownloadName(material.title, originalFilename)
+      : originalFilename;
+
+    res.setHeader(
+      "Content-Type",
+      material.mimeType || getMimeType(originalFilename),
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `${asAttachment ? "attachment" : "inline"}; filename*=UTF-8''${encodeURIComponent(responseFilename)}`,
+    );
+
+    const downloadStream = openGridFsDownloadStream(material.fileId);
+    downloadStream.on("error", reject);
+    downloadStream.on("end", resolve);
+    downloadStream.pipe(res);
+  });
+
 export const getMaterials = async (req, res) => {
   try {
     const sortOption = buildSortOption({
@@ -204,7 +234,6 @@ export const searchMaterials = async (req, res) => {
     const sortOrder = req.query?.sortOrder || "desc";
     const subject = normalizeWhitespace(req.query?.subject || "");
 
-    // Build a combined filter for search + letter + subject
     const filter = {};
 
     if (query) {
@@ -251,7 +280,6 @@ export const getLetterCounts = async (req, res) => {
   try {
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
-    // Use MongoDB aggregation to count documents per first letter
     const pipeline = [
       {
         $project: {
@@ -268,7 +296,6 @@ export const getLetterCounts = async (req, res) => {
 
     const results = await Material.aggregate(pipeline);
 
-    // Build a counts object with all 26 letters
     const counts = {};
     alphabet.forEach((l) => (counts[l] = 0));
     results.forEach((r) => {
@@ -354,6 +381,8 @@ export const getMaterialById = async (req, res) => {
 };
 
 export const createMaterial = async (req, res) => {
+  let uploadedFileId = null;
+
   try {
     const validation = await getValidatedTaxonomy(req.body);
 
@@ -363,26 +392,44 @@ export const createMaterial = async (req, res) => {
       });
     }
 
-    if (!req.file) {
+    if (!req.file?.buffer) {
       return res.status(400).json({
         message: "Please choose a file to upload.",
       });
     }
 
     const detectedType = detectFileType(req.file.originalname);
+    const originalFilename =
+      String(req.file.originalname || "").trim() || "file";
+    const mimeType = req.file.mimetype || getMimeType(originalFilename);
+    const uploadedBy = req.user?._id || req.user?.id;
     let contentText = "";
 
     if (detectedType === "PDF") {
-      const filePath = path.join(uploadDir, req.file.filename);
-      contentText = await extractPdfText(filePath);
+      contentText = await extractPdfText(req.file.buffer);
     }
+
+    uploadedFileId = await uploadBufferToGridFs({
+      buffer: req.file.buffer,
+      filename: originalFilename,
+      contentType: mimeType,
+      metadata: {
+        uploadedBy: String(uploadedBy || ""),
+        title: validation.data.title,
+        subject: validation.data.subject,
+        category: validation.data.category,
+      },
+    });
 
     const material = await Material.create({
       ...validation.data,
       type: detectedType,
-      fileUrl: `/uploads/${req.file.filename}`,
+      fileId: uploadedFileId,
+      originalFilename,
+      mimeType,
+      fileSize: req.file.size || req.file.buffer.length,
       contentText,
-      uploadedBy: req.user?._id || req.user?.id,
+      uploadedBy,
     });
 
     await material.populate("uploadedBy", "name role");
@@ -392,6 +439,10 @@ export const createMaterial = async (req, res) => {
       material: formatMaterial(material),
     });
   } catch (err) {
+    if (uploadedFileId) {
+      await deleteGridFsFile(uploadedFileId).catch(() => {});
+    }
+
     return res.status(500).json({
       message: "Server error while creating material.",
       error: err.message,
@@ -553,16 +604,18 @@ export const deleteMaterial = async (req, res) => {
       });
     }
 
-    deleteUploadedFile(material.fileUrl);
-
-    // Delete comments one-by-one so Mongoose post hooks fire
-    // (deleteMany does NOT trigger document-level post hooks).
     const relatedComments = await Comment.find({ material: req.params.id }).select("_id");
     await Promise.all(
       relatedComments.map((c) => Comment.findByIdAndDelete(c._id)),
     );
 
     await Material.findByIdAndDelete(req.params.id);
+
+    if (material.fileId) {
+      await deleteGridFsFile(material.fileId).catch((error) => {
+        console.error("GridFS cleanup error:", error.message);
+      });
+    }
 
     return res.json({
       message: "Material and related comments deleted successfully.",
@@ -575,23 +628,48 @@ export const deleteMaterial = async (req, res) => {
   }
 };
 
-export const downloadMaterialFile = async (req, res) => {
+export const getMaterialFile = async (req, res) => {
   try {
-    const material = await Material.findById(req.params.id);
+    const material = await Material.findById(req.params.id).select(
+      "fileId originalFilename mimeType title",
+    );
 
-    if (!material || !material.fileUrl) {
+    if (!material?.fileId) {
       return res.status(404).json({ message: "File not found." });
     }
 
-    const filename = material.fileUrl.split("/").pop();
-    const filePath = path.join(uploadDir, filename);
-
-    // Provide Content-Disposition to force the browser to strictly Download
-    return res.download(filePath, `${material.title.replace(/[^a-zA-Z0-9-_\.]/g, '_')}${path.extname(filename)}`);
+    await streamMaterialBinary(material, res);
   } catch (err) {
-    return res.status(500).json({
-      message: "Server error during file download.",
-      error: err.message,
-    });
+    if (!res.headersSent) {
+      return res.status(500).json({
+        message: "Server error while streaming file.",
+        error: err.message,
+      });
+    }
+
+    res.destroy(err);
+  }
+};
+
+export const downloadMaterialFile = async (req, res) => {
+  try {
+    const material = await Material.findById(req.params.id).select(
+      "fileId originalFilename mimeType title",
+    );
+
+    if (!material?.fileId) {
+      return res.status(404).json({ message: "File not found." });
+    }
+
+    await streamMaterialBinary(material, res, { asAttachment: true });
+  } catch (err) {
+    if (!res.headersSent) {
+      return res.status(500).json({
+        message: "Server error during file download.",
+        error: err.message,
+      });
+    }
+
+    res.destroy(err);
   }
 };

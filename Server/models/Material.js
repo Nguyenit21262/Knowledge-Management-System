@@ -45,9 +45,28 @@ const MaterialSchema = new mongoose.Schema(
       uppercase: true,
       index: true,
     },
-    fileUrl: {
+    fileId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+    },
+    originalFilename: {
       type: String,
       required: true,
+      trim: true,
+    },
+    mimeType: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    fileSize: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    fileUrl: {
+      type: String,
+      default: "",
       trim: true,
     },
     contentText: {

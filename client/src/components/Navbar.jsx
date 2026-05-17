@@ -11,7 +11,8 @@ const guestUser = {
   role: "guest",
 };
 
-
+const getDisplayName = (user) =>
+  String(user?.name || guestUser.name).trim() || guestUser.name;
 
 const Navbar = ({ user = guestUser, onOpenSidebar }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -23,7 +24,8 @@ const Navbar = ({ user = guestUser, onOpenSidebar }) => {
   const searchRef = useRef(null);
   const suggestions = useMaterialSuggestions(searchText);
   const safeUser = user || guestUser;
-  const userInitial = safeUser.name.charAt(0).toUpperCase();
+  const displayName = getDisplayName(safeUser);
+  const userInitial = displayName.charAt(0).toUpperCase();
 
   useEffect(() => {
     setIsMenuOpen(false);
@@ -107,7 +109,7 @@ const Navbar = ({ user = guestUser, onOpenSidebar }) => {
               </h1>
               {isAuthenticated && (
                 <p className="truncate text-sm text-slate-500">
-                  {safeUser.name} · {formatRole(safeUser.role, "Guest")}
+                  {displayName} · {formatRole(safeUser.role, "Guest")}
                 </p>
               )}
             </div>
@@ -195,7 +197,7 @@ const Navbar = ({ user = guestUser, onOpenSidebar }) => {
               <div className="absolute right-0 top-[calc(100%+10px)] z-50 w-[200px] rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
                 <div className="border-b border-slate-100 px-4 py-3">
                   <p className="truncate text-sm font-semibold text-slate-900">
-                    {safeUser.name}
+                    {displayName}
                   </p>
                   <p className="truncate text-xs text-slate-500">
                     {safeUser.email || formatRole(safeUser.role, "Guest")}

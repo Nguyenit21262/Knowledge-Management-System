@@ -1,6 +1,29 @@
 import axios from "axios";
 
 const FALLBACK_BACKEND_URL = "http://localhost:5000";
+const isLocalhostUrl = (value = "") => /\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(String(value).trim());
+
+const getDefaultBaseUrl = () => {
+  const configuredBaseUrl = import.meta.env.VITE_BACKEND_URL;
+
+  if (configuredBaseUrl && (import.meta.env.DEV || !isLocalhostUrl(configuredBaseUrl))) {
+    return configuredBaseUrl;
+  }
+
+  if (!import.meta.env.DEV && typeof window !== "undefined") {
+    return window.location.origin;
+  }
+
+  if (configuredBaseUrl) {
+    return import.meta.env.VITE_BACKEND_URL;
+  }
+
+  if (import.meta.env.DEV) {
+    return FALLBACK_BACKEND_URL;
+  }
+
+  return FALLBACK_BACKEND_URL;
+};
 
 const normalizeBaseUrl = (baseUrl) =>
   String(baseUrl || FALLBACK_BACKEND_URL)
@@ -11,7 +34,7 @@ const normalizeBaseUrl = (baseUrl) =>
 const removeApiSuffix = (baseUrl) => baseUrl.replace(/\/api$/, "");
 
 export const API_BASE_URL = removeApiSuffix(
-  normalizeBaseUrl(import.meta.env.VITE_BACKEND_URL),
+  normalizeBaseUrl(getDefaultBaseUrl()),
 );
 
 export const httpClient = axios.create({

@@ -28,7 +28,8 @@ const navItems = [
   { label: "Bookmarks", to: "/bookmarks", icon: Bookmark },
 ];
 
-
+const getDisplayName = (user) =>
+  String(user?.name || sidebarUser.name).trim() || sidebarUser.name;
 
 const Sidebar = ({ user = sidebarUser, isMobileOpen, onClose }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -36,7 +37,8 @@ const Sidebar = ({ user = sidebarUser, isMobileOpen, onClose }) => {
   const location = useLocation();
   const isExpanded = !isCollapsed;
   const safeUser = user || sidebarUser;
-  const userInitial = safeUser.name.charAt(0).toUpperCase();
+  const displayName = getDisplayName(safeUser);
+  const userInitial = displayName.charAt(0).toUpperCase();
   const isTeacher = normalizeRole(safeUser.role) === "teacher";
 
   const userId = safeUser?._id || safeUser?.id;
@@ -84,7 +86,7 @@ const Sidebar = ({ user = sidebarUser, isMobileOpen, onClose }) => {
           {isExpanded && (
             <div className="min-w-0">
               <h2 className="mb-1 truncate text-[1.15rem] font-medium tracking-tight text-slate-950">
-                {safeUser.name}
+                {displayName}
               </h2>
               <p className="text-[0.95rem] font-normal text-slate-500">
                 {formatRole(safeUser.role, "Guest")}

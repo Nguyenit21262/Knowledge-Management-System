@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "server": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "build:client": "npm --prefix ../client run build",
+    "migrate:uploads": "node scripts/migrateUploadsToGridFs.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

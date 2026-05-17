@@ -57,12 +57,15 @@ const adminSections = [
   },
 ];
 
+const getDisplayName = (user) => String(user?.name || "Teacher").trim() || "Teacher";
+
 const AdminSidebar = ({ isOpen, onClose }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { user } = useAppContext();
   const isExpanded = !isCollapsed;
   const safeUser = user || { name: "Teacher", email: "teacher@school.edu" };
-  const userInitial = safeUser.name.charAt(0).toUpperCase();
+  const displayName = getDisplayName(safeUser);
+  const userInitial = displayName.charAt(0).toUpperCase();
 
   return (
     <aside
@@ -190,7 +193,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
         {isExpanded && (
           <div className="min-w-0">
             <p className="truncate text-[1rem] font-medium text-white sm:text-[1.05rem]">
-              {safeUser.name}
+              {displayName}
             </p>
             <p className="truncate text-[0.88rem] font-normal text-slate-300 sm:text-[0.95rem]">
               {safeUser.email}

@@ -2,9 +2,9 @@ import fs from "fs";
 import { CanvasFactory } from "pdf-parse/worker";
 import { PDFParse } from "pdf-parse";
 
-export const extractPdfText = async (filePath) => {
+export const extractPdfText = async (source) => {
   try {
-    const buffer = fs.readFileSync(filePath);
+    const buffer = Buffer.isBuffer(source) ? source : fs.readFileSync(source);
 
     const parser = new PDFParse({
       data: buffer,

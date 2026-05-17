@@ -10,6 +10,19 @@ import { AppContext } from "./useAppContext.js";
 const AUTH_STORAGE_KEY =
   import.meta.env.VITE_AUTH_STORAGE_KEY || "kms-auth";
 
+const normalizeStoredUser = (value) => {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const name = typeof value.name === "string" ? value.name.trim() : "";
+
+  return {
+    ...value,
+    name: name || "User",
+  };
+};
+
 const readStoredAuth = () => {
   try {
     const rawValue = localStorage.getItem(AUTH_STORAGE_KEY);
@@ -21,7 +34,7 @@ const readStoredAuth = () => {
     const parsedValue = JSON.parse(rawValue);
 
     return {
-      user: parsedValue?.user || null,
+      user: normalizeStoredUser(parsedValue?.user),
     };
   } catch {
     return { user: null };
@@ -33,7 +46,7 @@ export const AppProvider = ({ children }) => {
   const [isAuthLoading, setIsAuthLoading] = useState(Boolean(authState.user));
 
   const persistAuth = (user) => {
-    const nextAuthState = { user };
+    const nextAuthState = { user: normalizeStoredUser(user) };
     setAuthState(nextAuthState);
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextAuthState));
   };
@@ -66,7 +79,6 @@ export const AppProvider = ({ children }) => {
 
   const register = async (payload) => {
     const data = await registerApi(payload);
-    // Do NOT auto-login user after registration
     return data.user;
   };
 

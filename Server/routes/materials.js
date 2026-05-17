@@ -6,6 +6,7 @@ import {
   searchMaterialSuggestions,
   getLetterCounts,
   getMaterialById,
+  getMaterialFile,
   createMaterial,
   updateMaterial,
   incrementDownload,
@@ -20,6 +21,8 @@ router.get("/search/suggestions", searchMaterialSuggestions);
 router.get("/search/letter-counts", getLetterCounts);
 router.get("/search", searchMaterials);
 router.get("/", getMaterials);
+router.get("/:id/file/:filename", getMaterialFile);
+router.get("/:id/file", getMaterialFile);
 router.get("/:id", getMaterialById);
 router.post("/", userAuth, upload.single("file"), createMaterial);
 router.put("/:id", userAuth, updateMaterial);
